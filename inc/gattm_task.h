@@ -341,9 +341,6 @@ struct  gattm_att_get_info_rsp
  * FUNCTION DECLARATIONS
  ****************************************************************************************
  */
-extern const struct ke_state_handler gattm_state_handler[GATTM_STATE_MAX];
-extern const struct ke_state_handler gattm_default_handler;
-extern ke_state_t gattm_state[GATTM_IDX_MAX];
 
 #endif /* (BLE_CENTRAL || BLE_PERIPHERAL) */
 /// @} GATTMTASK

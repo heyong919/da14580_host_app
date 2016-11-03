@@ -510,8 +510,6 @@ struct gattc_read_cmd_ind
  * FUNCTION DECLARATIONS
  ****************************************************************************************
  */
-extern const struct ke_state_handler gattc_state_handler[GATTC_STATE_MAX];
-extern const struct ke_state_handler gattc_default_handler;
-extern ke_state_t gattc_state[GATTC_IDX_MAX];
+
 /// @} GATTCTASK
 #endif // GATTC_TASK_H_

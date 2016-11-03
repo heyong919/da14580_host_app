@@ -30,6 +30,7 @@
  */
 #include "rwip_config.h"
 #include "ke_task.h"
+#include "co_bt.h"
 #include "gap.h"
 
 #if (BLE_CENTRAL || BLE_PERIPHERAL)
@@ -711,9 +712,6 @@ struct gapc_sign_counter_ind
  * TASK DESCRIPTOR DECLARATIONS
  ****************************************************************************************
  */
-extern const struct ke_state_handler gapc_state_handler[GAPC_STATE_MAX];
-extern const struct ke_state_handler gapc_default_handler;
-extern ke_state_t gapc_state[GAPC_IDX_MAX];
 
 #endif // (BLE_CENTRAL || BLE_PERIPHERAL)
 

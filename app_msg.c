@@ -13,7 +13,7 @@ stack_msg_t* msg_alloc_buffer(uint16_t paralen)
 	return (stack_msg_t *)buffer;
 }
 
-int msg_fill(stack_msg_t *msg_buf, uint16_t type, uint16_t srcid, uint16_t dstid, uint16_t paralen, uint8_t *param)
+int32_t msg_fill(stack_msg_t *msg_buf, uint16_t type, uint16_t srcid, uint16_t dstid, uint16_t paralen, uint8_t *param)
 {
 	msg_buf->length = paralen;
 	if(paralen)
@@ -25,7 +25,7 @@ int msg_fill(stack_msg_t *msg_buf, uint16_t type, uint16_t srcid, uint16_t dstid
 	return 0;
 }
 
-int msg_send(stack_msg_t *msg)
+int32_t msg_send(stack_msg_t *msg)
 {
 	//return uart_enqueue(msg);
 }

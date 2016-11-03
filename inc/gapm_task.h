@@ -784,9 +784,6 @@ struct gapm_dbg_mem_info_ind
  * TASK DESCRIPTOR DECLARATIONS
  ****************************************************************************************
  */
-extern const struct ke_state_handler gapm_state_handler[GAPM_STATE_MAX];
-extern const struct ke_state_handler gapm_default_handler;
-extern ke_state_t gapm_state[GAPM_IDX_MAX];
 
 /// @} GAPM_TASK
 

@@ -19,6 +19,13 @@
 #define STDTYPES_H_
 
 #include "stdint.h"
-#include "stdbool.h"
+//#include "stdbool.h"
+#ifndef bool
+
+#define bool char
+#define true 1
+#define false 0
+
+#endif
 
 #endif //STDTYPES_H_
