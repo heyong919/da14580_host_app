@@ -1,3 +1,7 @@
+# C object file
+*.o
+*.exe
+
 # Windows image file caches
 Thumbs.db
 ehthumbs.db
