@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
 	}
 
 	while (1) {
-		serial_write(serial_dev, "Testing");
+		serial_write(serial_dev, "Testing", 8);
 		ret = serial_read(serial_dev, data, sizeof(data));
 		if (ret <= 0) {
 			printf("No data available \r\n");
