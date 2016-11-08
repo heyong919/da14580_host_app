@@ -1,6 +1,8 @@
 # C object file
 *.o
 *.exe
+CMakeCache.txt
+CMakeFiles
 
 # Windows image file caches
 Thumbs.db
