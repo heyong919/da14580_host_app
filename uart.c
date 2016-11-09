@@ -1,10 +1,3 @@
-/*
- * uart.c
- *
- *  Created on: 2016Äê11ÔÂ1ÈÕ
- *      Author: heyong
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -23,7 +16,7 @@ int32_t comfd=-1;
 static int32_t uart_ready_to_read(int32_t fd) {
   int32_t rd_num;
 
-  rd_num = read(fd, read_buff, MAX_READ_SIZE);
+  rd_num = serial_read(fd, read_buff, MAX_READ_SIZE);
   printf("read[%d]: %s\n", rd_num, read_buff);
   return 0;
 }

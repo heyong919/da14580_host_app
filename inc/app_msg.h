@@ -13,6 +13,8 @@
 #include "stdlib.h"
 #include "compiler.h"
 
+// be carefull the alignment of struct:
+// the element of the struct must have no padding.
 struct stack_msg
 {
 	uint16_t type;
@@ -22,6 +24,8 @@ struct stack_msg
 	uint8_t data[__ARRAY_EMPTY];
 };
 typedef struct stack_msg stack_msg_t;
+
+#define MSG_GET_LENGTH(msg_p) (sizeof(stack_msg_t)+msg_p->length)
 
 stack_msg_t* msg_alloc_buffer(uint16_t paralen);
 int msg_fill(stack_msg_t *msg_buf, uint16_t type, uint16_t srcid, uint16_t dstid, uint16_t paralen, uint8_t *param);
