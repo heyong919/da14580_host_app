@@ -28,8 +28,8 @@
 
 #include <termios.h>
 
-typedef int32_t (*ready_to_read_callback)();
-typedef int32_t (*ready_to_write_callback)();
+typedef int32_t (*ready_to_read_callback_t)(int32_t fd);
+typedef int32_t (*ready_to_write_callback_t)(int32_t fd);
 
 int serial_open(const char *name);
 int serial_close(int fd);

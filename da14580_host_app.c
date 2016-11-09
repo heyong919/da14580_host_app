@@ -15,7 +15,7 @@
 int main(void) {
 	printf("!!!Hello World!!!"); /* prints !!!Hello World!!! */
 
-    uart_init(35, 115200);
+    uart_init(34, 115200);
 
 
 	return EXIT_SUCCESS;

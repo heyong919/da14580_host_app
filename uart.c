@@ -11,29 +11,50 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-//#include <termios.h>
+#include <termios.h>
 #include <errno.h>
 #include "stdtypes.h"
 
+#define MAX_READ_SIZE  (64)
+
+static char *read_buff;
 int32_t comfd=-1;
+
+static int32_t uart_ready_to_read(int32_t fd) {
+  int32_t rd_num;
+
+  rd_num = read(fd, read_buff, MAX_READ_SIZE);
+  printf("read[%d]: %s\n", rd_num, read_buff);
+  return 0;
+}
+
+static int32_t uart_ready_to_write(int32_t fd) {
+  // check command queue, send if any command in queue.
+  ;
+}
 
 int32_t uart_init(uint8_t id, uint32_t baudrate)
 {
 	//struct termios Opt;
 	char str_fd[32];
 
+  read_buff = (char *)malloc(MAX_READ_SIZE);
+  if(!read_buff) {
+    printf("malloc buff failed!");
+    return -1;
+  }
+
 	sprintf(str_fd, "/dev/ttyS%d", id);
-	comfd = open(str_fd, O_RDWR);
-	if(-1 == comfd)
+  comfd = serial_open(str_fd);
+  if(-1 == comfd)
 	{
 	    printf("open com(%d) error!", id);
 	    return -EFAULT;
 	}
 
+  serial_setup(comfd, B115200);
 
-	//tcgetattr(comfd);
-	//cfsetispeed(&Opt, 115200);
-	//cfsetospeed(&Opt, 115200);
-	//tcsetattr(comfd, TCANOW, &Opt);
+  serial_start(comfd, uart_ready_to_read, uart_ready_to_write);
+
 }
 

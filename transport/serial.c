@@ -31,6 +31,7 @@
 #include "stdtypes.h"
 
 static struct fd_set fd_rd, fd_wr;
+static uint8_t write_available=0;
 
 int32_t serial_setup(int32_t fd, int32_t baudrate)
 {
@@ -39,7 +40,7 @@ int32_t serial_setup(int32_t fd, int32_t baudrate)
   memset(&serial_config, 0, sizeof(serial_config));
   /* get current serial attr */
   if (tcgetattr(fd, &serial_config)) {
-    prinrf("Unable to get serial attributes: %s\r\n", strerror(errno));
+    printf("Unable to get serial attributes: %s\r\n", strerror(errno));
     close(fd);
     return -ENODEV;
   }
@@ -69,48 +70,71 @@ int32_t serial_setup(int32_t fd, int32_t baudrate)
     //serial_config.c_cc[VMIN] = 0;
     /* set attributes */
     if (tcsetattr(fd, TCSANOW, &serial_config)) {
-      prinrf("Unable to set serial attributes: %s\r\n", strerror(errno));
+      printf("Unable to set serial attributes: %s\r\n", strerror(errno));
       close(fd);
     }
   }
   return 0;
 }
 
-int32_t serial_start(int32_t fd)
+int32_t serial_start(int32_t fd, ready_to_read_callback_t read_cb, ready_to_write_callback_t write_cb)
 {
   int32_t result;
-  int32_t nread, nwrriten;
-  char buff[32];
+  struct timeval tv;
 
   FD_ZERO(&fd_rd);
   FD_ZERO(&fd_wr);
   FD_SET(fd, &fd_rd);
   FD_SET(fd, &fd_wr);
+  tv.tv_sec = 1;
+  tv.tv_usec = 0;
 
-  result = select(fd+1, &fd_rd, &fd_wr, NULL, NULL);
-  if(result == 0) { // timeout
-    printf("select timeout\n");
-  }
-  else if(result < 0) {
-    ;
-  }
-  else {
-    if(FD_ISSET(fd, &fd_rd)) {
-      nread=read(fd, buff, 10);
-      printf("readlength=%d\n", nread);
-      //buff[nread]='\0';
-
+  while(1){
+    FD_SET(0, &fd_rd);
+    if(write_available == 0)
+      FD_SET(fd, &fd_wr);
+    FD_SET(fd, &fd_rd);
+    result = select(fd+1, &fd_rd, &fd_wr, NULL, &tv);
+    if(result == 0) { // timeout
+      //printf("select timeout\n");
     }
-    else if(FD_ISSET(fd, &fd_wr)) {
-      nwrriten = write(fd, buff, 10);
-      printf("write length=%d\n", nwrriten);
+    else if(result < 0) {
+      printf("select failed %d\n", result);
+    }
+    else {
+      if(FD_ISSET(fd, &fd_rd)) {
+        //printf("read avail\n");
+        //nread=read(fd, buff, 16);
+        read_cb(fd);
+        FD_SET(fd, &fd_rd);
+      }
+      if(FD_ISSET(fd, &fd_wr)) {
+        //nwrriten = write(fd, buff, 10);
+        //printf("write length=%d\n", nwrriten);
+        write_available = 1;
+        write_cb(fd);
+        FD_CLR(fd, &fd_wr);
+      }
+      if(FD_ISSET(0, &fd_rd)) {
+        char buf[36];
+        int32_t nrd;
+        nrd=read(0, buf, 32);
+        buf[nrd]='\0';
+        printf("std input[%d]: %s\n", nrd, buf);
+      }
     }
   }
 }
 
 int32_t serial_write(int32_t fd, char *data, uint16_t length)
 {
-  return write(fd, data, length);
+  int32_t ret;
+
+  ret = write(fd, data, length);
+  if (ret < 0) {
+    printf("Unable to write serial: %s\r\n", strerror(errno));
+  }
+  return ret;
 }
 
 int32_t serial_read(int32_t fd, const char *buff, int32_t len)
@@ -119,15 +143,16 @@ int32_t serial_read(int32_t fd, const char *buff, int32_t len)
 
   ret = read(fd, buff, len);
   if (ret < 0) {
-    prinrf("Unable to read serial: %s\r\n", strerror(errno));
+    printf("Unable to read serial: %s\r\n", strerror(errno));
   }
+  return ret;
 }
 /* open the serial device, make sure it is not being used by any other program */
 int32_t serial_open(const char *name)
 {
   int32_t serial_fd = open(name, O_RDWR | O_NOCTTY | O_NONBLOCK);
   if (serial_fd < 0) {
-    prinrf("Unable to open serial device: %s: %s \r\n", name, strerror(errno));
+    printf("Unable to open serial device: %s: %s \r\n", name, strerror(errno));
   }
   return serial_fd;
 }
