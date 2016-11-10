@@ -65,12 +65,14 @@ int32_t serial_start(int32_t fd, ready_to_read_callback_t read_cb, ready_to_writ
   tv.tv_usec = 0;
 
   while(1){
+    // add std input fd
     FD_SET(0, &fd_rd);
+    // always add to read fd_set
+    FD_SET(fd, &fd_rd);
     if(write_available == 0)
       FD_SET(fd, &fd_wr);
-    FD_SET(fd, &fd_rd);
     result = select(fd+1, &fd_rd, &fd_wr, NULL, &tv);
-    if(result == 0) { // timeout
+    if(result == 0) {
       //printf("select timeout\n");
     }
     else if(result < 0) {
@@ -78,14 +80,10 @@ int32_t serial_start(int32_t fd, ready_to_read_callback_t read_cb, ready_to_writ
     }
     else {
       if(FD_ISSET(fd, &fd_rd)) {
-        //printf("read avail\n");
-        //nread=read(fd, buff, 16);
         read_cb(fd);
         FD_SET(fd, &fd_rd);
       }
       if(FD_ISSET(fd, &fd_wr)) {
-        //nwrriten = write(fd, buff, 10);
-        //printf("write length=%d\n", nwrriten);
         write_available = 1;
         write_cb(fd);
         FD_CLR(fd, &fd_wr);

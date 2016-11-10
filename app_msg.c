@@ -32,6 +32,11 @@ int32_t msg_fill(stack_msg_t *msg_buf, uint16_t type, uint16_t srcid, uint16_t d
 
 int32_t msg_send(stack_msg_t *msg)
 {
-	//return uart_enqueue(msg);
+  int16_t result;
+  result = enqueue_tail(msg);
+  if(result < 0)
+  {
+    printf("enqueue failed, queue full!\n");
+  }
 }
 

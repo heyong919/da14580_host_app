@@ -13,22 +13,23 @@
 static char *read_buff;
 int32_t comfd=-1;
 
+
 static int32_t uart_ready_to_read(int32_t fd) {
   int32_t rd_num;
 
   rd_num = serial_read(fd, read_buff, MAX_READ_SIZE);
   printf("read[%d]: %s\n", rd_num, read_buff);
+
   return 0;
 }
 
 static int32_t uart_ready_to_write(int32_t fd) {
   // check command queue, send if any command in queue.
-  ;
+  return 0;
 }
 
-int32_t uart_init(uint8_t id, uint32_t baudrate)
+int32_t transport_init()
 {
-	//struct termios Opt;
 	char str_fd[32];
 
   read_buff = (char *)malloc(MAX_READ_SIZE);
@@ -37,17 +38,23 @@ int32_t uart_init(uint8_t id, uint32_t baudrate)
     return -1;
   }
 
-	sprintf(str_fd, "/dev/ttyS%d", id);
+	sprintf(str_fd, "/dev/ttyS%d", 34);
   comfd = serial_open(str_fd);
   if(-1 == comfd)
 	{
-	    printf("open com(%d) error!", id);
+	    printf("open com port error!");
 	    return -EFAULT;
 	}
 
   serial_setup(comfd, B115200);
 
-  serial_start(comfd, uart_ready_to_read, uart_ready_to_write);
+  return 0;
+}
 
+int32_t transport_start()
+{
+  if(comfd)
+    serial_start(comfd, uart_ready_to_read, uart_ready_to_write);
+  return 0;
 }
 
