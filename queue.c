@@ -49,9 +49,32 @@ int16_t enqueue_head(QUEUE_TYPE p)
   return 0;
 }
 
+QUEUE_TYPE get_queue_head()
+{
+  if(queue_empty())
+    return NULL;
+  return queue[qhead];
+}
+
+void dequeue_head_pointer()
+{
+  if(qhead == qtail)
+    qhead = qtail = -1;
+  else
+    qhead = (qhead+1)%QUEUE_SIZE;
+}
+
 QUEUE_TYPE dequeue()
 {
   int16_t temp;
+  temp = get_queue_head();
+  if(temp != NULL) {
+    dequeue_head_pointer();
+  }
+
+  return temp;
+
+  /*
   if(queue_empty())
     return NULL;
   temp = qhead;
@@ -60,5 +83,6 @@ QUEUE_TYPE dequeue()
   else
     qhead = (qhead+1)%QUEUE_SIZE;
   return queue[temp];
+  */
 }
 

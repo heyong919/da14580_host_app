@@ -15,6 +15,9 @@
 #include "gattm_task.h"
 #include "gattc_task.h"
 
+
+#define dbg_func() printf("func:%s\n", __func__);
+
 struct attribute_full_desc
 {
 	/// Element UUID
@@ -37,7 +40,7 @@ typedef struct attribute_full_desc attribute_full_desc_t;
 // req | rsp
 // ind | - | cfm
 
-struct app_stack_callback
+typedef struct app_stack_callback
 {
 /// GAPM
 	// Command Complete event
@@ -145,8 +148,7 @@ struct app_stack_callback
 	// Read command indicated to upper layers.
 	int32_t (*gattc_read_cmd_indication)(struct gattc_read_cmd_ind *param);
 
-};
-typedef struct app_stack_callback app_stack_callback_t;
+} app_stack_callback_t;
 
 // set GAP/GATT stack callbacks
 int32_t app_set_stack_callback(app_stack_callback_t *callback);

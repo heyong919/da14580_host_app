@@ -4,7 +4,6 @@
  Author      : hey
  Version     :
  Copyright   : Your copyright notice
- Description : Hello World in C, Ansi-style
  ============================================================================
  */
 
@@ -15,6 +14,7 @@
 
 static int32_t my_gapm_cmd_cmp_handler(struct gapm_cmp_evt *param)
 {
+	dbg_func();
   return 0;
 }
 
@@ -257,6 +257,17 @@ static app_stack_callback_t my_stack_callback = {
   .gattc_read_cmd_indication = my_gattc_read_cmd_ind_handler
 };
 
+
+/*
+  1. GAPM_RESET_CMD -> GAPM_CMP_EVT
+  2. app_gap_set_dev_config -> GAPM_CMP_EVT
+  3. app_gap_start_scanning -> GAPM_ADV_REPORT_IND
+  4. app_gap_cancel_operation -> GAPM_CMP_EVT
+  5. app_gap_start_connection -> GAPM_CMP_EVT/GAPC_CONNECTION_REQ_IND
+  6. 
+
+
+*/
 
 int main(void) {
 	printf("!!!Hello World!!!"); /* prints !!!Hello World!!! */

@@ -103,9 +103,16 @@ int32_t serial_write(int32_t fd, const char *data, uint16_t length)
 {
   int32_t ret;
 
-  ret = write(fd, data, length);
+  if(write_available)
+    ret = write(fd, data, length);
+  else
+    ret = -EAGAIN;
   if (ret < 0) {
-    printf("Unable to write serial: %s\r\n", strerror(errno));
+    printf("serial_write failed(%d)\r\n", ret);
+  }
+  else if(ret < length) {
+    // should add fd to monitor and wait for notify
+    write_available = 0;
   }
   return ret;
 }
@@ -116,7 +123,7 @@ int32_t serial_read(int32_t fd, const char *buff, int32_t len)
 
   ret = read(fd, buff, len);
   if (ret < 0) {
-    printf("Unable to read serial: %s\r\n", strerror(errno));
+    printf("serial_write failed(%d)\r\n", ret);
   }
   return ret;
 }
