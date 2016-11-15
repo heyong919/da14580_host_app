@@ -36,7 +36,7 @@ static int32_t uart_ready_to_read(int32_t fd) {
       buf_size = SERIAL_SINGLE_RW_LEN;
 
     rd_num = serial_read(fd, buf, buf_size);
-    printf("read[%d]: %s\n", rd_num, recv_buff);
+    //printf("read[%d]: %s\n", rd_num, recv_buff);
 
     if(rb_write(&recv_rb, buf, rd_num) < 0)
       printf("rb_write failed!\n");
@@ -79,11 +79,13 @@ static int32_t uart_ready_to_write(int32_t fd) {
 
 static int32_t push_msg_to_send_buf(stack_msg_t *msg)
 {
-  int16_t msg_buf_len = msg->length + sizeof(stack_msg_t);
+  int16_t msg_buf_len = msg->length + sizeof(stack_msg_t) + 1;
+  char packet_head = FIXED_PACKET_HEAD;
 
   if(rb_available_space(&send_rb) > msg_buf_len)
   {
-    rb_write(&send_rb, (char *)msg, msg_buf_len);
+    rb_write(&send_rb, &packet_head, 1);
+    rb_write(&send_rb, (char *)msg, msg_buf_len-1);
   }
   return 0;
 }

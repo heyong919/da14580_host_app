@@ -72,12 +72,13 @@ int16_t rb_read(ringbuffer_t *rb, char *buff, uint16_t len)
 
 int16_t rb_read_prepare(ringbuffer_t *rb, char *buff, uint16_t len)
 {
-  int16_t i=0;
+  int16_t i=0, r_pos;
   if(rb_remaining_data(rb) < len)
     return -1;
 
+  r_pos = rb->r_pos;
   while(i < len) {
-    buff[i++] = rb->buf[(rb->r_pos++)%rb->size];
+    buff[i++] = rb->buf[(r_pos++)%rb->size];
   }
 
   return 0;
