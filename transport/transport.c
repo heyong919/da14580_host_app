@@ -7,9 +7,9 @@
 #include <termios.h>
 #include <errno.h>
 #include "stdtypes.h"
-#include "ringbuffer.h"
 #include "app_msg.h"
-#include "serial.h"
+#include "queue.h"
+#include "transport.h"
 
 #define SEND_BUFF_SIZE  (1024)
 #define RECV_BUFF_SIZE  (1024)
@@ -68,8 +68,8 @@ static int32_t uart_ready_to_read(int32_t fd) {
         }
       }
     }
-    return 0;
   }
+  return 0;
 }
 
 static int32_t uart_ready_to_write(int32_t fd) {
@@ -77,7 +77,7 @@ static int32_t uart_ready_to_write(int32_t fd) {
   return 0;
 }
 
-int32_t push_msg_to_send_buf(stack_msg_t *msg)
+static int32_t push_msg_to_send_buf(stack_msg_t *msg)
 {
   int16_t msg_buf_len = msg->length + sizeof(stack_msg_t);
 
@@ -90,6 +90,7 @@ int32_t push_msg_to_send_buf(stack_msg_t *msg)
 
 int32_t transport_trigger_write()
 {
+  int16_t remain_num;
   stack_msg_t *msg = get_queue_head();
 
   while(msg!=NULL)
@@ -104,33 +105,43 @@ int32_t transport_trigger_write()
       // insufficient send_buff
       break;
     }
-    msg = get_queue_head();
+    msg = (stack_msg_t *)(uint64_t)get_queue_head();
   }
 
-  while(rb_remaining_data(&send_rb))
+  remain_num = rb_remaining_data(&send_rb);
+  while(remain_num > 0)
   {
-    char *buf = malloc(SERIAL_SINGLE_RW_LEN);
+    int16_t srd_n = (remain_num>SERIAL_SINGLE_RW_LEN?SERIAL_SINGLE_RW_LEN:remain_num);
+    char *buf = malloc(srd_n);
 
-    if(rb_read_prepare(&send_rb, buf, SERIAL_SINGLE_RW_LEN) == 0)
+    if(rb_read_prepare(&send_rb, buf, srd_n) == 0)
     {
-      int32_t num = serial_write(port_fd, buf, SERIAL_SINGLE_RW_LEN);
+      int32_t num = serial_write(port_fd, buf, srd_n);
       if(num > 0)
       {
-        if(num < SERIAL_SINGLE_RW_LEN) {
+        if(num < srd_n) {
           // write buffer in kernel may be full
           // should wait for fd notify
           // it was handled in serial.c
+          break;
         }
 
         if(rb_read_commit(&send_rb, num) < 0){
           printf("read commit failed!");
         }
       }
+      else {
+        // write fail
+        break;
+      }
     }
+    remain_num = rb_remaining_data(&send_rb);
   }
+
+  return 0;
 }
 
-int32_t transport_init()
+int32_t transport_init(int16_t port)
 {
 	char str_fd[32];
 
@@ -146,7 +157,7 @@ int32_t transport_init()
 
   queue_init();
 
-	sprintf(str_fd, "/dev/ttyS%d", 34);
+	sprintf(str_fd, "/dev/ttyS%d", port);
   port_fd = serial_open(str_fd);
   if(-1 == port_fd)
 	{
@@ -159,10 +170,10 @@ int32_t transport_init()
   return 0;
 }
 
-int32_t transport_start()
+int32_t transport_start(console_cmd_handler_t cmd_handler)
 {
   if(port_fd)
-    serial_start(port_fd, uart_ready_to_read, uart_ready_to_write);
+    serial_start(port_fd, uart_ready_to_read, uart_ready_to_write, cmd_handler);
   return 0;
 }
 

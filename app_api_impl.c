@@ -5,29 +5,19 @@
  *      Author: heyong
  */
 
+#include <stdio.h>
 #include "stdtypes.h"
 #include "att.h"
 #include "app_api.h"
 #include "app_msg.h"
 
-typedef int32_t (*func_ptr)();
 
-app_stack_callback_t user_stack_callback =
-{ NULL };
+app_stack_callback_t *user_stack_callback = NULL;
 
 // set GAP/GATT stack callbacks
 int32_t app_set_stack_callback(app_stack_callback_t *callback)
 {
-	uint8_t i;
-	app_stack_callback_t *p_user_callback = &user_stack_callback;
-
-	for (i = 0; i < sizeof(app_stack_callback_t); i += sizeof(func_ptr))
-	{
-		if (*((func_ptr)(callback + i)) != NULL)
-		{
-			*((p_user_callback + i)) = *((callback + i));
-		}
-	}
+	user_stack_callback = callback;
 	return 0;
 }
 

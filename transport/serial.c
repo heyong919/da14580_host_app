@@ -1,9 +1,12 @@
-#include "serial.h"
+#include <stdio.h>
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/time.h>
+#include <sys/select.h>
 #include "stdtypes.h"
+#include "serial.h"
 
 static struct fd_set fd_rd, fd_wr;
 static uint8_t write_available=0;
@@ -52,7 +55,7 @@ int32_t serial_setup(int32_t fd, int32_t baudrate)
   return 0;
 }
 
-int32_t serial_start(int32_t fd, ready_to_read_callback_t read_cb, ready_to_write_callback_t write_cb)
+int32_t serial_start(int32_t fd, ready_to_read_callback_t read_cb, ready_to_write_callback_t write_cb, console_cmd_handler_t command_handler)
 {
   int32_t result;
   struct timeval tv;
@@ -94,12 +97,13 @@ int32_t serial_start(int32_t fd, ready_to_read_callback_t read_cb, ready_to_writ
         nrd=read(0, buf, 32);
         buf[nrd]='\0';
         printf("std input[%d]: %s\n", nrd, buf);
+        command_handler(buf, nrd);
       }
     }
   }
 }
 
-int32_t serial_write(int32_t fd, const char *data, uint16_t length)
+int32_t serial_write(int32_t fd, char *data, uint16_t length)
 {
   int32_t ret;
 
@@ -117,7 +121,7 @@ int32_t serial_write(int32_t fd, const char *data, uint16_t length)
   return ret;
 }
 
-int32_t serial_read(int32_t fd, const char *buff, int32_t len)
+int32_t serial_read(int32_t fd, char *buff, int32_t len)
 {
   int32_t ret;
 
@@ -139,4 +143,5 @@ int32_t serial_open(const char *name)
 
 int32_t serial_close(int32_t fd)
 {
+  return 0;
 }

@@ -5,11 +5,10 @@
  *      Author: heyong
  */
 
+#include <stdio.h>
 #include "stdtypes.h"
 #include "app_msg.h"
-
-#define QUEUE_TYPE  stack_msg_t*
-#define QUEUE_SIZE  16
+#include "queue.h"
 
 static QUEUE_TYPE queue[QUEUE_SIZE];
 static int16_t qhead, qtail;
@@ -66,23 +65,12 @@ void dequeue_head_pointer()
 
 QUEUE_TYPE dequeue()
 {
-  int16_t temp;
+  QUEUE_TYPE temp;
   temp = get_queue_head();
   if(temp != NULL) {
     dequeue_head_pointer();
   }
 
   return temp;
-
-  /*
-  if(queue_empty())
-    return NULL;
-  temp = qhead;
-  if(qhead == qtail)
-    qhead = qtail = -1;
-  else
-    qhead = (qhead+1)%QUEUE_SIZE;
-  return queue[temp];
-  */
 }
 

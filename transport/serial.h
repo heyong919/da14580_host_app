@@ -30,11 +30,13 @@
 
 typedef int32_t (*ready_to_read_callback_t)(int32_t fd);
 typedef int32_t (*ready_to_write_callback_t)(int32_t fd);
+typedef int32_t (*console_cmd_handler_t)(char *cmd_str, int16_t len);
 
-int serial_open(const char *name);
-int serial_close(int fd);
-int serial_setup(int fd, int baudrate);
-int serial_write(int fd, const char *data, uint16_t len);
-int serial_read(int fd, const char *data, int len);
+int32_t serial_open(const char *name);
+int32_t serial_close(int fd);
+int32_t serial_setup(int fd, int baudrate);
+int32_t serial_write(int fd, char *data, uint16_t len);
+int32_t serial_read(int fd, char *data, int len);
+int32_t serial_start(int32_t fd, ready_to_read_callback_t read_cb, ready_to_write_callback_t write_cb, console_cmd_handler_t command_handler);
 
 #endif
