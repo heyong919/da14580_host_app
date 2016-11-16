@@ -16,6 +16,7 @@
 #include "gapc_task.h"
 
 #define FIXED_PACKET_HEAD  (0x5)
+
 // be carefull the alignment of struct:
 // the element of the struct must have no padding.
 typedef struct stack_msg
@@ -29,7 +30,6 @@ typedef struct stack_msg
 
 #define MSG_GET_LENGTH(msg_p) (sizeof(stack_msg_t)+(msg_p)->length)
 
-
 stack_msg_t* msg_alloc_buffer(uint16_t paralen);
 int32_t msg_fill(stack_msg_t *msg_buf,
                  uint16_t type,
@@ -39,6 +39,7 @@ int32_t msg_fill(stack_msg_t *msg_buf,
                  uint8_t *param);
 int32_t msg_send(stack_msg_t *msg);
 int32_t msg_recv_handler(stack_msg_t *msg);
+void msg_free_buffer(stack_msg_t *msg_p);
 
 
 #endif /* INC_APP_MSG_H_ */

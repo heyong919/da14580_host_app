@@ -95,21 +95,24 @@ int32_t transport_trigger_write()
   int16_t remain_num;
   stack_msg_t *msg = get_queue_head();
 
+  // queue -> ringbuffer
   while(msg!=NULL)
   {
     if(push_msg_to_send_buf(msg) == 0)
     {
       // successful send to send_buffer
       dequeue_head_pointer();
+      msg_free_buffer(msg);
     }
     else
     {
-      // insufficient send_buff
+      // insufficient send_rb space
       break;
     }
     msg = (stack_msg_t *)(uint64_t)get_queue_head();
   }
 
+  // ringbuffer -> serial port
   remain_num = rb_remaining_data(&send_rb);
   while(remain_num > 0)
   {
@@ -145,7 +148,7 @@ int32_t transport_trigger_write()
 
 int32_t transport_init(int16_t port)
 {
-	char str_fd[32];
+  char str_fd[32];
 
   recv_buff = (char *)malloc(RECV_BUFF_SIZE);
   send_buff = (char *)malloc(SEND_BUFF_SIZE);
@@ -159,13 +162,13 @@ int32_t transport_init(int16_t port)
 
   queue_init();
 
-	sprintf(str_fd, "/dev/ttyS%d", port);
+  sprintf(str_fd, "/dev/ttyS%d", port);
   port_fd = serial_open(str_fd);
   if(-1 == port_fd)
-	{
-	    printf("open com port error!");
-	    return -EFAULT;
-	}
+  {
+      printf("open com port error!");
+      return -EFAULT;
+  }
 
   serial_setup(port_fd, B115200);
 

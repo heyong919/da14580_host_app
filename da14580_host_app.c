@@ -10,9 +10,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "co_error.h"
+#include "app_msg.h"
 #include "app_api.h"
 #include "transport/transport.h"
 
+#if 0
 static int32_t my_gapm_cmd_cmp_handler(struct gapm_cmp_evt *param)
 {
 	dbg_func();
@@ -318,6 +320,7 @@ static app_stack_callback_t my_stack_callback = {
  .gattc_read_cmd_indication = my_gattc_read_cmd_ind_handler
 };
 
+#endif
 
 static int32_t cmd_handler(char *cmd_str, int16_t len) {
   //
@@ -328,6 +331,45 @@ static int32_t cmd_handler(char *cmd_str, int16_t len) {
 
   return 0;
 }
+
+static int32_t my_common_next_ops(int32_t msg_type, void *param) {
+  // handle messages respectively if needed
+  switch(msg_type) {
+  case GAPM_CMP_EVT:
+    {
+      struct gapm_cmp_evt *p = (struct gapm_cmp_evt *)param;
+      if(p->status != CO_ERROR_NO_ERROR) {
+        printf("command exec report error!\n");
+        return -1;
+      }
+    }
+  }
+
+  // deal with next ops
+  app_user_next_operateion();
+  return 0;
+}
+
+static int32_t user_reset_gap(void) {
+  struct gapm_reset_cmd param = {
+    .operation = GAPM_RESET,
+  };
+  app_gap_reset(&param);
+  return 0;
+}
+
+static int32_t user_set_dev_config() {
+  struct gapm_set_dev_config_cmd param = {
+    .operation = GAPM_SET_DEV_CONFIG,
+    .role = GAP_CENTRAL_MST, // Device Role
+    .appearance = 0,
+    .appearance_write_perm = GAPM_WRITE_DISABLE,
+    .name_write_perm = GAPM_WRITE_DISABLE,
+  };
+  app_gap_set_dev_config(&param);
+  return 0;
+}
+
 /*
   1. GAPM_RESET_CMD -> GAPM_CMP_EVT
   2. app_gap_set_dev_config -> GAPM_CMP_EVT
@@ -339,6 +381,14 @@ static int32_t cmd_handler(char *cmd_str, int16_t len) {
 
 */
 
+static user_operation_t my_operation_list[] = {
+  {user_reset_gap, GAPM_CMP_EVT, my_common_next_ops},
+  {user_set_dev_config, GAPM_CMP_EVT, my_common_next_ops},
+
+  // don't remove this
+  {NULL, 0, NULL}
+};
+
 int main(void) {
 	printf("!!!Hello World!!!"); /* prints !!!Hello World!!! */
 
@@ -346,7 +396,10 @@ int main(void) {
   transport_init(12);
 
   // set stack callback
-  app_set_stack_callback(&my_stack_callback);
+  //app_set_stack_callback(&my_stack_callback);
+
+  // set user operation list
+  app_add_user_operations(my_operation_list);
 
   transport_start(cmd_handler);
 	return EXIT_SUCCESS;

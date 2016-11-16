@@ -225,8 +225,12 @@ int32_t msg_recv_handler(stack_msg_t *msg) {
     break;
 
   default:
+    printf("unknown event from stack:%x\n",  msg->type);
     break;
   }
+
+  app_user_operation_handler(msg->type, msg->data);
+
   return 0;
 }
 

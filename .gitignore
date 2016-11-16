@@ -3,6 +3,14 @@
 *.exe
 CMakeCache.txt
 CMakeFiles
+*.cmake
+*.a
+*.stackdump
+
+# GTAG files
+GTAGS
+GPATH
+GRTAGS
 
 # Windows image file caches
 Thumbs.db

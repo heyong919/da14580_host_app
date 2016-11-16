@@ -278,6 +278,18 @@ int32_t app_set_stack_callback(app_stack_callback_t *callback);
 	// Registration to peer device events (Indication/Notification).
 	int32_t app_gatt_register_peer_event();
 
+typedef struct _user_operation {
+  int32_t (*command)(void);
+  int32_t event_id;
+  int32_t (*handler)(int32_t msg_type, void *param);
+} user_operation_t;
+
+
+int32_t app_set_stack_callback(app_stack_callback_t *callback);
+int32_t app_add_user_operations(user_operation_t *op_list);
+int32_t app_user_next_operateion();
+int32_t app_user_operation_exec(user_operation_t *op);
+int32_t app_user_operation_handler(int32_t msg_type, void *param);
 
 
 #endif /* APP_API_H_ */
