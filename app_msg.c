@@ -8,10 +8,9 @@
 #include <stdio.h>
 #include "app_msg.h"
 #include "app_api.h"
-#include "queue.h"
 #include "transport/transport.h"
 
-extern app_stack_callback_t *user_stack_callback;
+//extern app_stack_callback_t *user_stack_callback;
 
 stack_msg_t* msg_alloc_buffer(uint16_t paralen)
 {
@@ -38,8 +37,8 @@ int32_t msg_fill(stack_msg_t *msg_buf, uint16_t type, uint16_t srcid, uint16_t d
 
 int32_t msg_send(stack_msg_t *msg)
 {
-  int16_t result;
-  result = enqueue_tail(msg);
+  int32_t result;
+  result = transport_enqueue_msg(msg);
   if(result < 0)
   {
     printf("enqueue failed, queue full!\n");
@@ -51,8 +50,9 @@ int32_t msg_send(stack_msg_t *msg)
 }
 
 int32_t msg_recv_handler(stack_msg_t *msg) {
-  printf("received msg [%x][%x][%x][%x]", msg->type, msg->src_id, msg->dst_id, msg->length);
+  printf("received msg [%x][%x][%x][%x]\n", msg->type, msg->src_id, msg->dst_id, msg->length);
 
+#if 0
   switch(msg->type) {
     // GAPM message
   case GAPM_CMP_EVT:
@@ -228,8 +228,10 @@ int32_t msg_recv_handler(stack_msg_t *msg) {
     printf("unknown event from stack:%x\n",  msg->type);
     break;
   }
+#endif
 
   app_user_operation_handler(msg->type, msg->data);
+  app_user_stack_event_handler(msg->type, msg->data);
 
   return 0;
 }

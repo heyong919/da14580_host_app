@@ -10,13 +10,11 @@
 
 #include "stdtypes.h"
 #include "att.h"
-#include "gapm_task.h"
-#include "gapc_task.h"
-#include "gattm_task.h"
-#include "gattc_task.h"
+#include "profiles.h"
 
 
 #define dbg_func() printf("func:%s\n", __func__);
+#define EVENT_BYPASS  0
 
 struct attribute_full_desc
 {
@@ -39,7 +37,6 @@ typedef struct attribute_full_desc attribute_full_desc_t;
 // cmd | - | ind
 // req | rsp
 // ind | - | cfm
-
 typedef struct app_stack_callback
 {
 /// GAPM
@@ -245,7 +242,7 @@ int32_t app_set_stack_callback(app_stack_callback_t *callback);
 /// ATT client api
 /*** ATTRIBUTE CLIENT ***/
 	// Server configuration request
-	int32_t app_gatt_exchange_mtu();
+	int32_t app_gatt_exchange_mtu(struct gattc_exc_mtu_cmd *param);
 	/*Discover All Services */
 	/*Discover Services by Service UUID*/
 	/*Find Included Services*/
@@ -253,13 +250,13 @@ int32_t app_set_stack_callback(app_stack_callback_t *callback);
 	/*Discover All Characteristics of a Service*/
 	/*Discover All Characteristic Descriptors*/
 	// Discovery command
-	int32_t app_gatt_discovery();
+	int32_t app_gatt_discovery(struct gattc_disc_cmd *param);
 	/*Read Value*/
 	/*Read Using UUID*/
 	/*Read Long Value*/
 	/*Read Multiple Values*/
 	// Read command
-	int32_t app_gatt_read();
+	int32_t app_gatt_read(struct gattc_read_cmd *param);
 	/*Write without response*/
 	/*Write without response with Authentication*/
 	/*Write Characteristic Value*/
@@ -270,13 +267,20 @@ int32_t app_set_stack_callback(app_stack_callback_t *callback);
 	/*Write Long Characteristic Descriptors*/
 	/*Characteristic Value Reliable Write*/
 	// Write command request
-	int32_t app_gatt_write();
+	int32_t app_gatt_write(struct gattc_write_cmd *param);
 	/* Cancel / Execute pending write operations */
 	// Execute write characteristic request
-	int32_t app_gatt_write_execute();
+	int32_t app_gatt_write_execute(struct gattc_execute_write_cmd *param);
 	/* Reception of an indication or notification from peer device. */
 	// Registration to peer device events (Indication/Notification).
-	int32_t app_gatt_register_peer_event();
+	int32_t app_gatt_register_peer_event(struct gattc_reg_to_peer_evt_cmd *param);
+
+
+/// SIG profiles related API
+/*** DISS ***/
+	int32_t app_diss_create_db(struct diss_create_db_req *param);
+	int32_t app_diss_set_char_value(struct diss_set_char_val_req *param);
+
 
 typedef struct _user_operation {
   int32_t (*command)(void);
@@ -284,12 +288,21 @@ typedef struct _user_operation {
   int32_t (*handler)(int32_t msg_type, void *param);
 } user_operation_t;
 
+typedef int32_t (*common_stack_event_handler_t)(uint16_t event_type, void *param);
 
-int32_t app_set_stack_callback(app_stack_callback_t *callback);
+typedef struct _stack_event_handler_map {
+  uint16_t event_type;
+  common_stack_event_handler_t handler;
+} stack_event_handler_map_t;
+
+int32_t app_api_init();
+//int32_t app_set_stack_callback(app_stack_callback_t *callback);
+int32_t app_add_stack_event_handler(uint16_t event_type, common_stack_event_handler_t event_handler);
 int32_t app_add_user_operations(user_operation_t *op_list);
+int32_t app_user_start_operations();
 int32_t app_user_next_operateion();
-int32_t app_user_operation_exec(user_operation_t *op);
-int32_t app_user_operation_handler(int32_t msg_type, void *param);
 
+int32_t app_user_operation_handler(int32_t ev_type, void *param);
+int32_t app_user_stack_event_handler(int32_t ev_type, void *param);
 
 #endif /* APP_API_H_ */

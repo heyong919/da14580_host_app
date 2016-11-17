@@ -11,49 +11,120 @@
 #include "app_api.h"
 #include "app_msg.h"
 
+#undef QUEUE_TYPE
+#define QUEUE_TYPE  user_operation_t*
+#include <queue.h>
+
+#define OPS_QUEUE_SIZE (32)
+#define MAX_STACK_EVENT_SIZE (50)
+static user_operation_t* ops_queue_buffer[OPS_QUEUE_SIZE];
+static queue_t ops_queue;
+static user_operation_t *user_current_op;
 
 static app_stack_callback_t _user_stack_callback = { NULL };
-app_stack_callback_t *user_stack_callback = &_user_stack_callback;
-static user_operation_t *user_ops = NULL;
-static user_operation_t *user_current_op = NULL;
+//static app_stack_callback_t *user_stack_callback = &_user_stack_callback;
+
+static stack_event_handler_map_t user_event_handler_map[MAX_STACK_EVENT_SIZE];
+
+int32_t app_api_init() {
+    // init operation queue
+	queue_init(&ops_queue, ops_queue_buffer, OPS_QUEUE_SIZE);
+
+    memset(user_event_handler_map, 0, sizeof(user_event_handler_map));
+    user_current_op = NULL;
+    return 0;
+}
 
 // set GAP/GATT stack callbacks
 int32_t app_set_stack_callback(app_stack_callback_t *callback)
 {
-  user_stack_callback = callback;
+  //TODO: set every non-NULL func in callback to user_stack_callback
   return 0;
 }
 
-int32_t app_add_user_operations(user_operation_t *op_list) {
-  user_ops = op_list;
-  user_current_op = op_list;
+int32_t app_add_single_operation(user_operation_t *op_ptr) {
+  if(op_ptr) {
+    if(op_ptr->command) {
+      if(enqueue_tail(&ops_queue, &op_ptr) != 0)
+        printf("enqueue failed!\n");
+    }
+  }
+  //user_current_op = get_queue_head(&ops_queue);
+  return 0;
+}
+
+int32_t app_add_user_operations(user_operation_t *op_ptr) {
+  while(op_ptr) {
+    if(op_ptr->command) {
+      if(enqueue_tail(&ops_queue, &op_ptr) != 0)
+        printf("enqueue failed!\n");
+      op_ptr++;
+    }
+    else {
+      break;
+    }
+  }
+  //user_current_op = get_queue_head(&ops_queue);
+  return 0;
+}
+
+static int32_t app_user_operation_exec(user_operation_t *op) {
+  if(op->command) {
+    op->command();
+  }
+  else {
+    // should not reach here
+  }
+  return 0;
+}
+
+int32_t app_user_start_operations() {
+  user_current_op = get_queue_head(&ops_queue);
+  if(user_current_op)
+    app_user_operation_exec(user_current_op);
   return 0;
 }
 
 int32_t app_user_next_operateion() {
-  user_current_op++;
-  app_user_operation_exec(user_current_op);
-  return 0;
-}
-
-int32_t app_user_operation_exec(user_operation_t *op) {
-  if(op) {
-    if(op->command) {
-      op->command();
-    }
-    else {
-      // command is NULL indicating the end of op list
+  dequeue(&ops_queue); // == user_current_op
+  user_current_op = get_queue_head(&ops_queue);
+  if(user_current_op) {
+    app_user_operation_exec(user_current_op);
+    if(user_current_op->event_id == EVENT_BYPASS) {
+      // EVENT_BYPASS indicate there is no event returned as response of this command
+      // we should simply jump to next operation
+      app_user_next_operateion();
     }
   }
   return 0;
 }
 
-int32_t app_user_operation_handler(int32_t msg_type, void *param) {
-  if(msg_type == user_current_op->event_id) {
+int32_t app_user_operation_handler(int32_t ev_type, void *param) {
+  if(ev_type == user_current_op->event_id) {
     if(user_current_op->handler)
-      user_current_op->handler(msg_type, param);
+      user_current_op->handler(ev_type, param);
     else
       app_user_next_operateion();
+  }
+  return 0;
+}
+
+int32_t app_add_stack_event_handler(uint16_t ev_type, common_stack_event_handler_t event_handler) {
+  uint32_t i=0;
+  // find current map
+  while(user_event_handler_map[i].event_type && user_event_handler_map[i].event_type!=ev_type) {
+    i++;
+  }
+  user_event_handler_map[i].event_type = ev_type;
+  return 0;
+}
+
+int32_t app_user_stack_event_handler(int32_t ev_type, void *param) {
+  uint32_t i=0;
+  while(user_event_handler_map[i].event_type) {
+	if(user_event_handler_map[i].event_type == ev_type)
+		user_event_handler_map[i].handler(ev_type, param);
+    i++;
   }
   return 0;
 }
@@ -308,7 +379,7 @@ int32_t app_gatt_write_confirm(struct gattc_write_cmd_cfm *param)
 /// ATT client api
 /*** ATTRIBUTE CLIENT ***/
 // Server configuration request
-int32_t app_gatt_exchange_mtu()
+int32_t app_gatt_exchange_mtu(struct gattc_exc_mtu_cmd *param)
 {
   dbg_func();
   return 0;
@@ -320,7 +391,7 @@ int32_t app_gatt_exchange_mtu()
 /*Discover All Characteristics of a Service*/
 /*Discover All Characteristic Descriptors*/
 // Discovery command
-int32_t app_gatt_discovery()
+int32_t app_gatt_discovery(struct gattc_disc_cmd *param)
 {
   dbg_func();
   return 0;
@@ -330,7 +401,7 @@ int32_t app_gatt_discovery()
 /*Read Long Value*/
 /*Read Multiple Values*/
 // Read command
-int32_t app_gatt_read()
+int32_t app_gatt_read(struct gattc_read_cmd *param)
 {
   dbg_func();
   return 0;
@@ -345,23 +416,50 @@ int32_t app_gatt_read()
 /*Write Long Characteristic Descriptors*/
 /*Characteristic Value Reliable Write*/
 // Write command request
-int32_t app_gatt_write()
+int32_t app_gatt_write(struct gattc_write_cmd *param)
 {
   dbg_func();
   return 0;
 }
 /* Cancel / Execute pending write operations */
 // Execute write characteristic request
-int32_t app_gatt_write_execute()
+int32_t app_gatt_write_execute(struct gattc_execute_write_cmd *param)
 {
   dbg_func();
   return 0;
 }
 /* Reception of an indication or notification from peer device. */
 // Registration to peer device events (Indication/Notification).
-int32_t app_gatt_register_peer_event()
+int32_t app_gatt_register_peer_event(struct gattc_reg_to_peer_evt_cmd *param)
 {
   dbg_func();
   return 0;
 }
+
+/// SIG profiles related API
+/* DISS Profile */
+// create attribute db
+int32_t app_diss_create_db(struct diss_create_db_req *param)
+{
+  uint16_t para_len = sizeof(struct diss_create_db_req);
+  stack_msg_t *msg_buf = msg_alloc_buffer(para_len);
+
+  dbg_func();
+  msg_fill(msg_buf, DISS_CREATE_DB_REQ, TASK_GTL, TASK_DISS, para_len, (uint8_t *)param);
+  msg_send(msg_buf);
+
+  return 0;
+}
+// set diss related char value like manufacturer name, serial num etc.
+int32_t app_diss_set_char_value(struct diss_set_char_val_req *param)
+{
+  uint16_t para_len = sizeof(struct diss_set_char_val_req) + param->val_len;
+  stack_msg_t *msg_buf = msg_alloc_buffer(para_len);
+
+  dbg_func();
+  msg_fill(msg_buf, DISS_SET_CHAR_VAL_REQ, TASK_GTL, TASK_DISS, para_len, (uint8_t *)param);
+  msg_send(msg_buf);
+  return 0;
+}
+
 

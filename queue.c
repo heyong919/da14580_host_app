@@ -7,68 +7,65 @@
 
 #include <stdio.h>
 #include "stdtypes.h"
-#include "app_msg.h"
-#include "queue.h"
 
-static QUEUE_TYPE queue[QUEUE_SIZE];
-static int16_t qhead, qtail;
+#define QUEUE_TYPE  void*
+#include <queue.h>
 
-#define queue_full() ((qtail+1)%QUEUE_SIZE == qhead)
-#define queue_empty() (qhead == -1 && qtail == -1)
-
-void queue_init()
+void queue_init(queue_t *qu, QUEUE_TYPE *buf, uint16_t size)
 {
-  qhead = -1;
-  qtail = -1;
+  qu->qhead = -1;
+  qu->qtail = -1;
+  qu->buf = buf;
+  qu->size = size;
 }
 
-int16_t enqueue_tail(QUEUE_TYPE p)
+int32_t enqueue_tail(queue_t *qu, QUEUE_TYPE *p)
 {
-  if(queue_full())
+  if(queue_full(qu))
     return -1;
-  qtail = (qtail+1)%QUEUE_SIZE;
-  queue[qtail] = p;
-  if(qhead == -1)
+  qu->qtail = (qu->qtail+1)%qu->size;
+  qu->buf[qu->qtail] = *p;
+  if(qu->qhead == -1)
   {
-    qhead = qtail;
+	  qu->qhead = qu->qtail;
   }
   return 0;
 }
 
-int16_t enqueue_head(QUEUE_TYPE p)
+int32_t enqueue_head(queue_t *qu, QUEUE_TYPE *p)
 {
-  if(queue_full())
+  if(queue_full(qu))
     return -1;
-  qhead = (qhead-1+QUEUE_SIZE)%QUEUE_SIZE;
-  queue[qhead] = p;
-  if(qtail == -1)
+  qu->qhead = (qu->qhead-1+qu->size)%qu->size;
+  qu->buf[qu->qhead] = *p;
+  if(qu->qtail == -1)
   {
-    qtail = qhead;
+	  qu->qtail = qu->qhead;
   }
   return 0;
 }
 
-QUEUE_TYPE get_queue_head()
+QUEUE_TYPE get_queue_head(queue_t *qu)
 {
-  if(queue_empty())
+  if(queue_empty(qu))
     return NULL;
-  return queue[qhead];
+  return qu->buf[qu->qhead];
 }
 
-void dequeue_head_pointer()
+void dequeue_head_pointer(queue_t *qu)
 {
-  if(qhead == qtail)
-    qhead = qtail = -1;
+  if(qu->qhead == qu->qtail)
+	  qu->qhead = qu->qtail = -1;
   else
-    qhead = (qhead+1)%QUEUE_SIZE;
+	  qu->qhead = (qu->qhead+1)%qu->size;
 }
 
-QUEUE_TYPE dequeue()
+QUEUE_TYPE dequeue(queue_t *qu)
 {
   QUEUE_TYPE temp;
-  temp = get_queue_head();
+  temp = get_queue_head(qu);
   if(temp != NULL) {
-    dequeue_head_pointer();
+    dequeue_head_pointer(qu);
   }
 
   return temp;

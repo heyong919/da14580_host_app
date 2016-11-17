@@ -9,11 +9,10 @@
 #define INC_APP_MSG_H_
 
 #include "stdtypes.h"
-#include "string.h"
+//#include "string.h"
 #include "stdlib.h"
 #include "compiler.h"
-#include "gapm_task.h"
-#include "gapc_task.h"
+#include "profiles.h"
 
 #define FIXED_PACKET_HEAD  (0x5)
 

@@ -8,11 +8,12 @@
 #include <errno.h>
 #include "stdtypes.h"
 #include "app_msg.h"
-#include "queue.h"
+//#include "queue.h"
 #include "transport.h"
 
 #define SEND_BUFF_SIZE  (1024)
 #define RECV_BUFF_SIZE  (1024)
+#define MSG_QUEUE_SIZE (32)
 
 #define SERIAL_SINGLE_RW_LEN  128
 
@@ -20,6 +21,14 @@ static char *recv_buff;
 static char *send_buff;
 //static int16_t recv_r, recv_w, send_r, send_w;
 static ringbuffer_t send_rb, recv_rb;
+
+#undef QUEUE_TYPE
+#define QUEUE_TYPE  stack_msg_t*
+#include <queue.h>
+
+static stack_msg_t* msg_queue_buffer[MSG_QUEUE_SIZE];
+static queue_t msg_queue;
+
 int32_t port_fd=-1;
 
 
@@ -74,6 +83,7 @@ static int32_t uart_ready_to_read(int32_t fd) {
 
 static int32_t uart_ready_to_write(int32_t fd) {
   // check command queue, send if any command in queue.
+  transport_trigger_write();
   return 0;
 }
 
@@ -90,10 +100,14 @@ static int32_t push_msg_to_send_buf(stack_msg_t *msg)
   return 0;
 }
 
+int32_t transport_enqueue_msg(stack_msg_t *msg) {
+  return enqueue_tail(&msg_queue, &msg);
+}
+
 int32_t transport_trigger_write()
 {
   int16_t remain_num;
-  stack_msg_t *msg = get_queue_head();
+  stack_msg_t *msg = get_queue_head(&msg_queue);
 
   // queue -> ringbuffer
   while(msg!=NULL)
@@ -101,7 +115,7 @@ int32_t transport_trigger_write()
     if(push_msg_to_send_buf(msg) == 0)
     {
       // successful send to send_buffer
-      dequeue_head_pointer();
+      dequeue_head_pointer(&msg_queue);
       msg_free_buffer(msg);
     }
     else
@@ -109,7 +123,7 @@ int32_t transport_trigger_write()
       // insufficient send_rb space
       break;
     }
-    msg = (stack_msg_t *)(uint64_t)get_queue_head();
+    msg = (stack_msg_t *)(uint64_t)get_queue_head(&msg_queue);
   }
 
   // ringbuffer -> serial port
@@ -160,7 +174,7 @@ int32_t transport_init(int16_t port)
   ringbuffer_init(&recv_rb, recv_buff, RECV_BUFF_SIZE);
   ringbuffer_init(&send_rb, send_buff, SEND_BUFF_SIZE);
 
-  queue_init();
+  queue_init(&msg_queue, msg_queue_buffer, MSG_QUEUE_SIZE);
 
   sprintf(str_fd, "/dev/ttyS%d", port);
   port_fd = serial_open(str_fd);
