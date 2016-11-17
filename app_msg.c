@@ -15,6 +15,7 @@
 stack_msg_t* msg_alloc_buffer(uint16_t paralen)
 {
 	uint8_t *buffer = malloc(sizeof(stack_msg_t)+paralen);
+  memset(buffer, 0, sizeof(stack_msg_t)+paralen);
 	return (stack_msg_t *)buffer;
 }
 

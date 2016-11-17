@@ -432,6 +432,7 @@ static int32_t user_profile_diss_config() {
 		memcpy(&req_name->val[0], APP_DIS_MANUFACTURER_NAME, APP_DIS_MANUFACTURER_NAME_LEN);
 
 		app_diss_set_char_value(req_name);
+    free(req_name);
 	}
 
 	// Set Model Number String value in the DB
@@ -445,6 +446,7 @@ static int32_t user_profile_diss_config() {
 		memcpy(&req_mod->val[0], APP_DIS_MODEL_NB_STR, APP_DIS_MODEL_NB_STR_LEN);
 
 		app_diss_set_char_value(req_mod);
+    free(req_mod);
 	}
 
 	// Set System ID value in the DB
@@ -458,6 +460,7 @@ static int32_t user_profile_diss_config() {
 		memcpy(&req_id->val[0], APP_DIS_SYSTEM_ID, APP_DIS_SYSTEM_ID_LEN);
 
 		app_diss_set_char_value(req_id);
+    free(req_id);
 	}
 
 	// Set the software version in the DB. This is the reference design sw version
@@ -472,6 +475,7 @@ static int32_t user_profile_diss_config() {
 		memcpy(&req_id->val[0], APP_DIS_SW_REV, len);
 
 		app_diss_set_char_value(req_id);
+    free(req_id);
 	}
 
 	// Set the firmware version in the DB. This is the common code sw version
@@ -486,6 +490,7 @@ static int32_t user_profile_diss_config() {
 		memcpy(&req_id->val[0], APP_DIS_FIRM_REV, len);
 
 		app_diss_set_char_value(req_id);
+    free(req_id);
 	}
 
 	// Set the PNP ID in the DB
@@ -504,6 +509,7 @@ static int32_t user_profile_diss_config() {
 		memcpy(&req_id->val[1], ids, 6);
 
 		app_diss_set_char_value(req_id);
+    free(req_id);
 	}
 	return 0;
 }

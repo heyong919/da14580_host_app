@@ -69,6 +69,7 @@ static int32_t uart_ready_to_read(int32_t fd) {
             rb_read(&recv_rb, buf, msg_len);
             msg = (stack_msg_t *) buf;
             msg_recv_handler(msg);
+            free(buf);
           }
 
         }
@@ -154,6 +155,7 @@ int32_t transport_trigger_write()
         break;
       }
     }
+    free(buf);
     remain_num = rb_remaining_data(&send_rb);
   }
 
