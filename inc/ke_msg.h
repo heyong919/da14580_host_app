@@ -62,6 +62,15 @@ typedef uint8_t ke_state_t;
 /// - bits[9..0] : message index (no more that 1024 messages per task).
 typedef uint16_t ke_msg_id_t;
 
+/// Builds the task identifier from the type and the index of that task.
+#define KE_BUILD_ID(type, index) ( (ke_task_id_t)(((index) << 8)|(type)) )
+
+/// Retrieves task type from task id.
+#define KE_TYPE_GET(ke_task_id) ((ke_task_id) & 0xFF)
+
+/// Retrieves task index number from task id.
+#define KE_IDX_GET(ke_task_id) (((ke_task_id) >> 8) & 0xFF)
+
 /// @} MSG
 
 #endif // _KE_MSG_H_

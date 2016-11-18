@@ -15,6 +15,44 @@
 #include "profiles.h"
 #include "transport/transport.h"
 
+#define MAX_KNOWN_DEVICE  8
+
+#define DEV_BOND  (1<<1)
+#define DEV_CONNECTED  (1<<2)
+
+enum {
+  STATE_INIT,
+  STATE_ADVERTISING,
+  STATE_CONNECTING,
+  STATE_CONNECTED,
+  STATE_BONDING,
+  STATE_BONDED,
+};
+
+typedef struct {
+  uint16_t state;
+  uint16_t role;
+  struct bd_addr adv_addr;
+  uint16_t conidx;
+  uint16_t conhdl;
+  uint16_t idx;
+  uint16_t rssi;
+  uint16_t adv_data_len;
+  char adv_data[ADV_DATA_LEN + 1];
+  struct gapc_ltk ltk;
+  struct gapc_irk irk;
+  struct gap_sec_key csrk;
+} ble_dev_t;
+
+typedef struct {
+  int16_t state;
+  int16_t num_of_known_device;
+  ble_dev_t devices[MAX_KNOWN_DEVICE]; //FIXME: TODO: device[0] indicate itself and the current connected device info
+  void *profile_data;
+} app_context_t;
+
+static app_context_t app_cntx;
+
 #if 0
 static int32_t my_gapm_cmd_cmp_handler(struct gapm_cmp_evt *param)
 {
@@ -334,7 +372,7 @@ static int32_t cmd_handler(char *cmd_str, int16_t len) {
   return 0;
 }
 
-static int32_t my_common_next_ops(int32_t msg_type, void *param) {
+static int32_t my_common_next_ops(uint16_t src_id, int32_t msg_type, void *param) {
   // handle messages respectively if needed
   switch(msg_type) {
   case GAPM_CMP_EVT:
@@ -425,6 +463,10 @@ static int32_t user_profile_diss_config() {
 		// Set Manufacturer Name value in the DB
 		struct diss_set_char_val_req *req_name =
 				(struct diss_set_char_val_req *)malloc(sizeof(struct diss_set_char_val_req) + APP_DIS_MANUFACTURER_NAME_LEN);
+		if(!req_name) {
+			printf("malloc failed!(%d)\n", __LINE__);
+			return -1;
+		}
 		memset(req_name, 0, sizeof(struct diss_set_char_val_req) + APP_DIS_MANUFACTURER_NAME_LEN);
 		// Fill in the parameter structure
 		req_name->char_code     = DIS_MANUFACTURER_NAME_CHAR;
@@ -439,6 +481,10 @@ static int32_t user_profile_diss_config() {
 	{
 		struct diss_set_char_val_req *req_mod =
 						(struct diss_set_char_val_req *)malloc(sizeof(struct diss_set_char_val_req) + APP_DIS_MODEL_NB_STR_LEN);
+		if(!req_mod) {
+			printf("malloc failed!(%d)\n", __LINE__);
+			return -1;
+		}
 		memset(req_mod, 0, sizeof(struct diss_set_char_val_req) + APP_DIS_MODEL_NB_STR_LEN);
 		// Fill in the parameter structure
 		req_mod->char_code     = DIS_MODEL_NB_STR_CHAR;
@@ -453,6 +499,10 @@ static int32_t user_profile_diss_config() {
 	{
 		struct diss_set_char_val_req *req_id =
 						(struct diss_set_char_val_req *)malloc(sizeof(struct diss_set_char_val_req) + APP_DIS_SYSTEM_ID_LEN);
+		if(!req_id) {
+			printf("malloc failed!(%d)\n", __LINE__);
+			return -1;
+		}
 		memset(req_id, 0, sizeof(struct diss_set_char_val_req) + APP_DIS_SYSTEM_ID_LEN);
 		// Fill in the parameter structure
 		req_id->char_code     = DIS_SYSTEM_ID_CHAR;
@@ -468,6 +518,10 @@ static int32_t user_profile_diss_config() {
 		struct diss_set_char_val_req *req_id;
 		len = strlen(APP_DIS_SW_REV);
 		req_id = (struct diss_set_char_val_req *)malloc(sizeof(struct diss_set_char_val_req) + len);
+		if(!req_id) {
+			printf("malloc failed!(%d)\n", __LINE__);
+			return -1;
+		}
 		memset(req_id, 0, sizeof(struct diss_set_char_val_req) + len);
 		// Fill in the parameter structure
 		req_id->char_code     = DIS_SW_REV_STR_CHAR;
@@ -483,6 +537,10 @@ static int32_t user_profile_diss_config() {
 		struct diss_set_char_val_req *req_id;
 		len = strlen(APP_DIS_FIRM_REV);
 		req_id = (struct diss_set_char_val_req *)malloc(sizeof(struct diss_set_char_val_req) + len);
+		if(!req_id) {
+			printf("malloc failed!(%d)\n", __LINE__);
+			return -1;
+		}
 		memset(req_id, 0, sizeof(struct diss_set_char_val_req) + len);
 		// Fill in the parameter structure
 		req_id->char_code     = DIS_FIRM_REV_STR_CHAR;
@@ -498,6 +556,10 @@ static int32_t user_profile_diss_config() {
 		struct diss_set_char_val_req *req_id;
 		uint16_t ids[3];
 		req_id = (struct diss_set_char_val_req *)malloc(sizeof(struct diss_set_char_val_req) + DIS_PNP_ID_LEN);
+		if(!req_id) {
+			printf("malloc failed!(%d)\n", __LINE__);
+			return -1;
+		}
 		memset(req_id, 0, sizeof(struct diss_set_char_val_req) + DIS_PNP_ID_LEN);
 		// Fill in the parameter structure
 		req_id->char_code     = DIS_PNP_ID_CHAR;
@@ -524,6 +586,10 @@ static int32_t user_start_advertising() {
   uint8_t device_name_avail_space;
   uint8_t device_name_temp_buf[64];
   struct gapm_start_advertise_cmd *cmd = malloc(sizeof(struct gapm_start_advertise_cmd));
+  if(!cmd) {
+    printf("malloc failed!(%d)\n", __LINE__);
+    return -1;
+  }
   memset(cmd, 0, sizeof(struct gapm_start_advertise_cmd));
   cmd->op.code     = GAPM_ADV_UNDIRECT;
   cmd->op.addr_src = GAPM_PUBLIC_ADDR;
@@ -569,17 +635,237 @@ static int32_t user_start_advertising() {
   }
 
   app_gap_start_advertising(cmd);
+  free(cmd);
+  app_cntx.state = STATE_ADVERTISING;
   printf("Advertising...\n");
   return 0;
 }
 
+static int32_t my_connect_indication_handler(uint16_t src_id, uint16_t event_type, void *param) {
+  struct gapc_connection_req_ind *para = param;
+  struct diss_enable_req diss_req;
+  struct gapc_connection_cfm *conn_cfm;
+  int32_t ret=0;
+
+  app_cntx.state = STATE_CONNECTING;
+  printf("peer device connected(conhdl:%x):[%02x-%02x-%02x-%02x-%02x-%02x]\n", para->conhdl,
+        para->peer_addr.addr[0], para->peer_addr.addr[1], para->peer_addr.addr[2],
+        para->peer_addr.addr[3], para->peer_addr.addr[4], para->peer_addr.addr[5]);
+
+  // Retrieve the connection index from the GAPC task instance for the connection
+  app_cntx.devices[0].conidx = KE_IDX_GET(src_id);
+
+  // Retrieve the connection handle from the parameters
+  app_cntx.devices[0].conhdl = para->conhdl;
+
+  memcpy(app_cntx.devices[0].adv_addr.addr, para->peer_addr.addr, sizeof(struct bd_addr));
+
+  diss_req.conhdl = para->conhdl;
+  diss_req.con_type = PRF_CON_DISCOVERY;
+  diss_req.sec_lvl = 1;
+  app_diss_enable(&diss_req); // without response
+
+  conn_cfm = malloc(sizeof(struct gapc_connection_cfm));
+  if(!conn_cfm) {
+    printf("malloc failed!(%d)\n", __LINE__);
+    return -1;
+  }
+  memset(conn_cfm, 0, sizeof(struct gapc_connection_cfm));
+  conn_cfm->auth = GAP_AUTH_REQ_NO_MITM_NO_BOND;
+  conn_cfm->authorize = GAP_AUTHZ_NOT_SET;
+  ret = app_gap_conn_confirm(KE_IDX_GET(src_id), conn_cfm);
+  free(conn_cfm);
+
+  // app_add_device_to_cntx(conhdl, para->peer_addr_type, para->peer_addr, STATE_CONNECTED);
+  // TBD
+  app_cntx.state = STATE_CONNECTED;
+
+  return ret;
+}
+
+void app_sec_gen_ltk(uint8_t key_size)
+{
+    // Counter
+    uint8_t i;
+    app_cntx.devices[0].ltk.key_size = key_size;
+
+    // Randomly generate the LTK and the Random Number
+    for (i = 0; i < RAND_NB_LEN; i++)
+    {
+        app_cntx.devices[0].ltk.randnb.nb[i] = rand()%256;
+
+    }
+
+    // Randomly generate the end of the LTK
+    for (i = 0; i < KEY_LEN; i++)
+    {
+        app_cntx.devices[0].ltk.ltk.key[i] = (((key_size) < (16 - i)) ? 0 : rand()%256);
+    }
+
+    // Randomly generate the EDIV
+    app_cntx.devices[0].ltk.ediv = rand()%65536;
+}
+
+uint32_t app_gen_tk()
+{
+    // Generate a PIN Code (Between 100000 and 999999)
+    return (100000 + (rand()%900000));
+}
+
+static int32_t my_peer_bond_req_handler(uint16_t src_id, uint16_t event_type, void *param) {
+  struct gapc_bond_req_ind *para = param;
+  struct gapc_bond_cfm * bond_cfm;
+  int32_t ret=0;
+
+  app_cntx.state = STATE_BONDING;
+  bond_cfm = malloc(sizeof(struct gapc_bond_cfm));
+  if(!bond_cfm) {
+    printf("malloc failed!(%d)\n", __LINE__);
+    return -1;
+  }
+  memset(bond_cfm, 0, sizeof(struct gapc_bond_cfm));
+  switch(para->request) {
+    // Bond Pairing request
+  case GAPC_PAIRING_REQ:
+    {
+      bond_cfm->request = GAPC_PAIRING_RSP;
+      bond_cfm->accept = true;
+
+      // OOB information
+      bond_cfm->data.pairing_feat.oob            = GAP_OOB_AUTH_DATA_NOT_PRESENT;
+      // Encryption key size
+      bond_cfm->data.pairing_feat.key_size       = KEY_LEN;
+      // IO capabilities
+      bond_cfm->data.pairing_feat.iocap          = GAP_IO_CAP_NO_INPUT_NO_OUTPUT;
+      // Authentication requirements
+      bond_cfm->data.pairing_feat.auth           = GAP_AUTH_REQ_NO_MITM_BOND;
+      //bond_cfm->data.pairing_feat.auth           = GAP_AUTH_REQ_MITM_NO_BOND;
+      //Initiator key distribution
+      bond_cfm->data.pairing_feat.ikey_dist      = GAP_KDIST_SIGNKEY;
+      //Responder key distribution
+      bond_cfm->data.pairing_feat.rkey_dist      = GAP_KDIST_ENCKEY;
+      //Security requirements
+      bond_cfm->data.pairing_feat.sec_req        = GAP_NO_SEC;
+    }
+    break;
+
+    // Used to retrieve pairing Temporary Key
+  case GAPC_TK_EXCH:
+    {
+      if(para->data.tk_type == GAP_TK_DISPLAY) {
+        // Generate a PIN Code (between 100,000 and 999,999)
+        uint32_t pin_code = 100000 + (rand()%900000); //app_gen_tk();
+        bond_cfm->request = GAPC_TK_EXCH;
+        bond_cfm->accept = true;
+
+        memset(bond_cfm->data.tk.key, 0, KEY_LEN);
+
+        bond_cfm->data.tk.key[12] = (uint8_t)((pin_code & 0xFF000000) >> 24);
+        bond_cfm->data.tk.key[13] = (uint8_t)((pin_code & 0x00FF0000) >> 16);
+        bond_cfm->data.tk.key[14] = (uint8_t)((pin_code & 0x0000FF00) >>  8);
+        bond_cfm->data.tk.key[15] = (uint8_t)((pin_code & 0x000000FF) >>  0);
+
+      }
+      else {
+        printf("tk data mismatch!\n"); //ASSERT_ERR(0);
+      }
+    }
+    break;
+
+    // Used for Long Term Key exchange
+  case GAPC_LTK_EXCH:
+    {
+      // generate ltk
+      app_sec_gen_ltk(para->data.key_size);
+
+      bond_cfm->request = GAPC_LTK_EXCH;
+
+      bond_cfm->accept = true;
+
+      bond_cfm->data.ltk.key_size = app_cntx.devices[0].ltk.key_size;
+      bond_cfm->data.ltk.ediv = app_cntx.devices[0].ltk.ediv;
+
+      memcpy(&(bond_cfm->data.ltk.randnb), &(app_cntx.devices[0].ltk.randnb) , RAND_NB_LEN);
+      memcpy(&(bond_cfm->data.ltk.ltk), &(app_cntx.devices[0].ltk.ltk) , KEY_LEN);
+    }
+    break;
+
+  default:
+    {
+      free(bond_cfm);
+      return -1;
+    }
+    break;
+  }
+
+  ret = app_gap_bond_confirm(KE_IDX_GET(src_id), bond_cfm);
+  free(bond_cfm);
+
+  return ret;
+}
+
+static int32_t my_peer_bond_info_handler(uint16_t src_id, uint16_t event_type, void *param) {
+  struct gapc_bond_ind *para = param;
+
+  switch (para->info) {
+  case GAPC_PAIRING_SUCCEED:
+    if (para->data.auth | GAP_AUTH_BOND)
+      app_cntx.devices[0].state |= DEV_BOND;
+    break;
+
+  case GAPC_IRK_EXCH:
+    memcpy(app_cntx.devices[0].irk.irk.key, para->data.irk.irk.key, KEY_LEN);
+    memcpy(app_cntx.devices[0].irk.addr.addr.addr,
+        para->data.irk.addr.addr.addr, BD_ADDR_LEN);
+    app_cntx.devices[0].irk.addr.addr_type = para->data.irk.addr.addr_type;
+
+    break;
+
+  case GAPC_LTK_EXCH:
+    app_cntx.devices[0].ltk.ediv = para->data.ltk.ediv;
+    app_cntx.devices[0].ltk.key_size = para->data.ltk.key_size;
+    memcpy(app_cntx.devices[0].ltk.ltk.key, para->data.ltk.ltk.key,
+        para->data.ltk.key_size);
+    memcpy(app_cntx.devices[0].ltk.randnb.nb, para->data.ltk.randnb.nb,
+    RAND_NB_LEN);
+    break;
+
+  case GAPC_PAIRING_FAILED:
+    {
+      struct gapc_disconnect_cmd req;
+      app_cntx.devices[0].state &= (~DEV_BOND);
+
+      req.operation = GAPC_DISCONNECT;
+      req.reason = CO_ERROR_REMOTE_USER_TERM_CON;
+      app_gap_disconnect(KE_IDX_GET(src_id), &req);
+    }
+    break;
+  }
+
+  return 0;
+}
+
+
+
 /* GATT Client
-  1. GAPM_RESET_CMD -> GAPM_CMP_EVT
-  2. app_gap_set_dev_config -> GAPM_CMP_EVT
-  3. app_gap_start_scanning -> GAPM_ADV_REPORT_IND
-  4. app_gap_cancel_operation -> GAPM_CMP_EVT
-  5. app_gap_start_connection -> GAPM_CMP_EVT/GAPC_CONNECTION_REQ_IND
-  6. 
+ * gapm reset
+ * app_gap_set_dev_config master role
+ * app_inq GAPM_START_SCAN_CMD
+ * wait for GAPM_ADV_REPORT_IND
+ * GAPM_CANCEL_CMD to stop inq
+ * choose one report dev and send GAPM_START_CONNECTION_CMD
+ * wait for GAPC_CONNECTION_REQ_IND
+ * app_connect_confirm GAPC_CONNECTION_CFM
+ * profiles enable function
+ *     (following is done in profiles tasks on target)
+ *     gattc discover (several times for each services and characteristics)
+ *     receive GATTC_DISC_SVC_IND / GATTC_DISC_CHAR_IND
+ *     receive GATTC_CMP_EVT
+ * receive profiles enable confirm
+ * app_security_enable GAPC_BOND_CMD to send pairing request if not bond before
+ *
+ * TBD
+ *
 */
 /* GATT Server
  * gapm reset
@@ -589,8 +875,13 @@ static int32_t user_start_advertising() {
  * gap set dev config (peripheral)
  * start advertising
  *     app_easy_gap_undirected_advertise_start  GAPM_START_ADVERTISE_CMD
- * wait for connection
- *
+ * wait for connection GAPC_CONNECTION_REQ_IND
+ * profiles enable fuction (maybe no response)
+ * app_gap_conn_confirm GAPC_CONNECTION_CFM
+ * optional
+ * 		GAPC_BOND_REQ_IND
+ * 		app_gap_bond_confirm
+ * 		GAPC_BOND_IND
 */
 /*
  * attmdb_add_service     allocate handles, buffers for attributes space
@@ -613,6 +904,8 @@ static user_operation_t my_operation_list[] = {
 
 int main(void) {
   printf("!!!Hello World!!!"); /* prints !!!Hello World!!! */
+
+  memset(&app_cntx, 0, sizeof(app_cntx));
   app_api_init();
 
   // TODO: add interface config to parameter
@@ -620,11 +913,13 @@ int main(void) {
 
   // set stack callback
   //app_set_stack_callback(&my_stack_callback);
-  //app_add_stack_event_handler()
+  app_add_stack_event_handler(GAPC_CONNECTION_REQ_IND, my_connect_indication_handler);
+  app_add_stack_event_handler(GAPC_BOND_REQ_IND, my_peer_bond_req_handler);
+  app_add_stack_event_handler(GAPC_BOND_IND, my_peer_bond_info_handler);
 
   // set user operation list
   app_add_user_operations((user_operation_t *)my_operation_list);
 
   transport_start(cmd_handler);
-	return EXIT_SUCCESS;
+  return EXIT_SUCCESS;
 }

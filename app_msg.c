@@ -231,8 +231,8 @@ int32_t msg_recv_handler(stack_msg_t *msg) {
   }
 #endif
 
-  app_user_operation_handler(msg->type, msg->data);
-  app_user_stack_event_handler(msg->type, msg->data);
+  app_user_operation_handler(msg->src_id, msg->type, msg->data);
+  app_user_stack_event_handler(msg->src_id, msg->type, msg->data);
 
   return 0;
 }

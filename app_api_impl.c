@@ -99,10 +99,12 @@ int32_t app_user_next_operateion() {
   return 0;
 }
 
-int32_t app_user_operation_handler(int32_t ev_type, void *param) {
+int32_t app_user_operation_handler(uint16_t src_id, int32_t ev_type, void *param) {
+  if(!user_current_op)
+    return 0;
   if(ev_type == user_current_op->event_id) {
     if(user_current_op->handler)
-      user_current_op->handler(ev_type, param);
+      user_current_op->handler(src_id, ev_type, param);
     else
       app_user_next_operateion();
   }
@@ -116,14 +118,15 @@ int32_t app_add_stack_event_handler(uint16_t ev_type, common_stack_event_handler
     i++;
   }
   user_event_handler_map[i].event_type = ev_type;
+  user_event_handler_map[i].handler = event_handler;
   return 0;
 }
 
-int32_t app_user_stack_event_handler(int32_t ev_type, void *param) {
+int32_t app_user_stack_event_handler(uint16_t src_id, int32_t ev_type, void *param) {
   uint32_t i=0;
   while(user_event_handler_map[i].event_type) {
 	if(user_event_handler_map[i].event_type == ev_type)
-		user_event_handler_map[i].handler(ev_type, param);
+		user_event_handler_map[i].handler(src_id, ev_type, param);
     i++;
   }
   return 0;
@@ -175,7 +178,7 @@ int32_t app_gap_set_dev_name(struct gapm_set_dev_name_cmd *param)
   stack_msg_t *msg_buf = msg_alloc_buffer(para_len);
 
   dbg_func();
-  msg_fill(msg_buf, GAPM_SET_DEV_NAME, TASK_GTL, TASK_GAPM, para_len, (uint8_t *)param);
+  msg_fill(msg_buf, GAPM_SET_DEV_NAME_CMD, TASK_GTL, TASK_GAPM, para_len, (uint8_t *)param);
   msg_send(msg_buf);
 
   return 0;
@@ -183,21 +186,36 @@ int32_t app_gap_set_dev_name(struct gapm_set_dev_name_cmd *param)
 // Set device channel map
 int32_t app_gap_set_channel_map(struct gapm_set_channel_map_cmd *param)
 {
+  uint16_t para_len = sizeof(struct gapm_set_channel_map_cmd);
+  stack_msg_t *msg_buf = msg_alloc_buffer(para_len);
+
   dbg_func();
+  msg_fill(msg_buf, GAPM_SET_CHANNEL_MAP_CMD, TASK_GTL, TASK_GAPM, para_len, (uint8_t *)param);
+  msg_send(msg_buf);
   return 0;
 }
 /* Local device information */
 // Get local device info command
 int32_t app_gap_get_dev_info(struct gapm_get_dev_info_cmd *param)
 {
+  uint16_t para_len = sizeof(struct gapm_get_dev_info_cmd);
+  stack_msg_t *msg_buf = msg_alloc_buffer(para_len);
+
   dbg_func();
+  msg_fill(msg_buf, GAPM_GET_DEV_INFO_CMD, TASK_GTL, TASK_GAPM, para_len, (uint8_t *)param);
+  msg_send(msg_buf);
   return 0;
 }
 /* White List */
 // White List Management Command
 int32_t app_gap_white_list_mgt(struct gapm_white_list_mgt_cmd *param)
 {
+  uint16_t para_len = sizeof(struct gapm_white_list_mgt_cmd) + param->nb*sizeof(struct gap_bdaddr);
+  stack_msg_t *msg_buf = msg_alloc_buffer(para_len);
+
   dbg_func();
+  msg_fill(msg_buf, GAPM_WHITE_LIST_MGT_CMD, TASK_GTL, TASK_GAPM, para_len, (uint8_t *)param);
+  msg_send(msg_buf);
   return 0;
 }
 /* Air Operations */
@@ -228,120 +246,200 @@ int32_t app_gap_start_scanning(struct gapm_start_scan_cmd *param)
 // Set connection initialization Command
 int32_t app_gap_start_connection(struct gapm_start_connection_cmd *param)
 {
+  uint16_t para_len = sizeof(struct gapm_start_connection_cmd) + param->nb_peers*sizeof(struct gap_bdaddr);
+  stack_msg_t *msg_buf = msg_alloc_buffer(para_len);
+
   dbg_func();
+  msg_fill(msg_buf, GAPM_START_CONNECTION_CMD, TASK_GTL, TASK_GAPM, para_len, (uint8_t *)param);
+  msg_send(msg_buf);
   return 0;
 }
 /* Security / Encryption Toolbox */
 // Resolve address command
 int32_t app_gap_resolve_addr(struct gapm_resolv_addr_cmd *param)
 {
+  uint16_t para_len = sizeof(struct gapm_resolv_addr_cmd) + param->nb_key*sizeof(struct gap_sec_key);
+  stack_msg_t *msg_buf = msg_alloc_buffer(para_len);
+
   dbg_func();
+  msg_fill(msg_buf, GAPM_RESOLV_ADDR_CMD, TASK_GTL, TASK_GAPM, para_len, (uint8_t *)param);
+  msg_send(msg_buf);
   return 0;
 }
 // Generate a random address.
 int32_t app_gap_gen_random_addr(struct gapm_gen_rand_addr_cmd *param)
 {
+  uint16_t para_len = sizeof(struct gapm_gen_rand_addr_cmd);
+  stack_msg_t *msg_buf = msg_alloc_buffer(para_len);
+
   dbg_func();
+  msg_fill(msg_buf, GAPM_GEN_RAND_ADDR_CMD, TASK_GTL, TASK_GAPM, para_len, (uint8_t *)param);
+  msg_send(msg_buf);
   return 0;
 }
 // Use the AES-128 block in the controller
 int32_t app_gap_use_enc_block(struct gapm_use_enc_block_cmd *param)
 {
+  uint16_t para_len = sizeof(struct gapm_use_enc_block_cmd);
+  stack_msg_t *msg_buf = msg_alloc_buffer(para_len);
+
   dbg_func();
+  msg_fill(msg_buf, GAPM_USE_ENC_BLOCK_CMD, TASK_GTL, TASK_GAPM, para_len, (uint8_t *)param);
+  msg_send(msg_buf);
   return 0;
 }
 // Generate a 8-byte random number
 int32_t app_gap_gen_random_nb(struct gapm_gen_rand_nb_cmd *param)
 {
+  uint16_t para_len = sizeof(struct gapm_gen_rand_nb_cmd);
+  stack_msg_t *msg_buf = msg_alloc_buffer(para_len);
+
   dbg_func();
+  msg_fill(msg_buf, GAPM_GEN_RAND_NB_CMD, TASK_GTL, TASK_GAPM, para_len, (uint8_t *)param);
+  msg_send(msg_buf);
   return 0;
 }
 
 /// GAPC API
 /* Connection state information */
 // Set specific link data configuration. Reply for connection request.
-int32_t app_gap_conn_confirm(struct gapc_connection_cfm *param)
+int32_t app_gap_conn_confirm(uint16_t conidx, struct gapc_connection_cfm *param)
 {
   uint16_t para_len = sizeof(struct gapc_connection_cfm);
   stack_msg_t *msg_buf = msg_alloc_buffer(para_len);
 
   dbg_func();
-  msg_fill(msg_buf, GAPC_CONNECTION_CFM, TASK_GTL, TASK_GAPM, para_len, (uint8_t *)param);
+  msg_fill(msg_buf, GAPC_CONNECTION_CFM, TASK_GTL, KE_BUILD_ID(TASK_GAPC, conidx), para_len, (uint8_t *)param);
   msg_send(msg_buf);
 
   return 0;
 }
 /* Link management command */
 // Request disconnection of current link command.
-int32_t app_gap_disconnect(struct gapc_disconnect_cmd *param)
+int32_t app_gap_disconnect(uint16_t conidx, struct gapc_disconnect_cmd *param)
 {
+  uint16_t para_len = sizeof(struct gapc_disconnect_cmd);
+  stack_msg_t *msg_buf = msg_alloc_buffer(para_len);
+
   dbg_func();
+  msg_fill(msg_buf, GAPC_DISCONNECT_CMD, TASK_GTL, KE_BUILD_ID(TASK_GAPC, conidx), para_len, (uint8_t *)param);
+  msg_send(msg_buf);
   return 0;
 }
 /* Peer device info */
 // Retrieve information command
-int32_t app_gap_get_peer_info(struct gapc_get_info_cmd *param)
+int32_t app_gap_get_peer_info(uint16_t conidx, struct gapc_get_info_cmd *param)
 {
+  uint16_t para_len = sizeof(struct gapc_get_info_cmd);
+  stack_msg_t *msg_buf = msg_alloc_buffer(para_len);
+
   dbg_func();
+  msg_fill(msg_buf, GAPC_GET_INFO_CMD, TASK_GTL, KE_BUILD_ID(TASK_GAPC, conidx), para_len, (uint8_t *)param);
+  msg_send(msg_buf);
   return 0;
 }
 /* Privacy configuration */
 // Set Privacy flag command.
-int32_t app_gap_set_privacy(struct gapc_set_privacy_cmd *param)
+int32_t app_gap_set_privacy(uint16_t conidx, struct gapc_set_privacy_cmd *param)
 {
+  uint16_t para_len = sizeof(struct gapc_set_privacy_cmd);
+  stack_msg_t *msg_buf = msg_alloc_buffer(para_len);
+
   dbg_func();
+  msg_fill(msg_buf, GAPC_SET_PRIVACY_CMD, TASK_GTL, KE_BUILD_ID(TASK_GAPC, conidx), para_len, (uint8_t *)param);
+  msg_send(msg_buf);
   return 0;
 }
 // Set Reconnection Address Value command.
-int32_t app_gap_set_recon_addr(struct gapc_set_recon_addr_cmd *param)
+int32_t app_gap_set_recon_addr(uint16_t conidx, struct gapc_set_recon_addr_cmd *param)
 {
+  uint16_t para_len = sizeof(struct gapc_set_recon_addr_cmd);
+  stack_msg_t *msg_buf = msg_alloc_buffer(para_len);
+
   dbg_func();
+  msg_fill(msg_buf, GAPC_SET_RECON_ADDR_CMD, TASK_GTL, KE_BUILD_ID(TASK_GAPC, conidx), para_len, (uint8_t *)param);
+  msg_send(msg_buf);
   return 0;
 }
 /* Connection parameters update */
 // Perform update of connection parameters command
-int32_t app_gap_conn_param_update(struct gapc_param_update_cmd *param)
+int32_t app_gap_conn_param_update(uint16_t conidx, struct gapc_param_update_cmd *param)
 {
+  uint16_t para_len = sizeof(struct gapc_param_update_cmd);
+  stack_msg_t *msg_buf = msg_alloc_buffer(para_len);
+
   dbg_func();
+  msg_fill(msg_buf, GAPC_PARAM_UPDATE_CMD, TASK_GTL, KE_BUILD_ID(TASK_GAPC, conidx), para_len, (uint8_t *)param);
+  msg_send(msg_buf);
   return 0;
 }
 // Master confirm or not that parameters proposed by slave are accepted or not
-int32_t app_gap_conn_para_update_confirm(struct gapc_param_update_cfm *param)
+int32_t app_gap_conn_para_update_confirm(uint16_t conidx, struct gapc_param_update_cfm *param)
 {
+  uint16_t para_len = sizeof(struct gapc_param_update_cfm);
+  stack_msg_t *msg_buf = msg_alloc_buffer(para_len);
+
   dbg_func();
+  msg_fill(msg_buf, GAPC_PARAM_UPDATE_CFM, TASK_GTL, KE_BUILD_ID(TASK_GAPC, conidx), para_len, (uint8_t *)param);
+  msg_send(msg_buf);
   return 0;
 }
 /* Bonding procedure */
 // Start Bonding command procedure
-int32_t app_gap_start_bonding(struct gapc_bond_cmd *param)
+int32_t app_gap_start_bonding(uint16_t conidx, struct gapc_bond_cmd *param)
 {
+  uint16_t para_len = sizeof(struct gapc_bond_cmd);
+  stack_msg_t *msg_buf = msg_alloc_buffer(para_len);
+
   dbg_func();
+  msg_fill(msg_buf, GAPC_BOND_CMD, TASK_GTL, KE_BUILD_ID(TASK_GAPC, conidx), para_len, (uint8_t *)param);
+  msg_send(msg_buf);
   return 0;
 }
 // Confirm requested bond information.
-int32_t app_gap_bond_confirm(struct gapc_bond_cfm *param)
+int32_t app_gap_bond_confirm(uint16_t conidx, struct gapc_bond_cfm *param)
 {
+  uint16_t para_len = sizeof(struct gapc_bond_cfm);
+  stack_msg_t *msg_buf = msg_alloc_buffer(para_len);
+
   dbg_func();
+  msg_fill(msg_buf, GAPC_BOND_CFM, TASK_GTL, KE_BUILD_ID(TASK_GAPC, conidx), para_len, (uint8_t *)param);
+  msg_send(msg_buf);
   return 0;
 }
 /* Encryption procedure */
 // Start Encryption command procedure
-int32_t app_gap_start_encrypt(struct gapc_encrypt_cmd *param)
+int32_t app_gap_start_encrypt(uint16_t conidx, struct gapc_encrypt_cmd *param)
 {
+  uint16_t para_len = sizeof(struct gapc_encrypt_cmd);
+  stack_msg_t *msg_buf = msg_alloc_buffer(para_len);
+
   dbg_func();
+  msg_fill(msg_buf, GAPC_ENCRYPT_CMD, TASK_GTL, KE_BUILD_ID(TASK_GAPC, conidx), para_len, (uint8_t *)param);
+  msg_send(msg_buf);
   return 0;
 }
 // Confirm requested Encryption information.
-int32_t app_gap_encrypt_confirm(struct gapc_encrypt_cfm *param)
+int32_t app_gap_encrypt_confirm(uint16_t conidx, struct gapc_encrypt_cfm *param)
 {
+  uint16_t para_len = sizeof(struct gapc_encrypt_cfm);
+  stack_msg_t *msg_buf = msg_alloc_buffer(para_len);
+
   dbg_func();
+  msg_fill(msg_buf, GAPC_ENCRYPT_CFM, TASK_GTL, KE_BUILD_ID(TASK_GAPC, conidx), para_len, (uint8_t *)param);
+  msg_send(msg_buf);
   return 0;
 }
 /* Security request procedure */
 // Start Security Request command procedure
-int32_t app_gap_start_security(struct gapc_security_cmd *param)
+int32_t app_gap_start_security(uint16_t conidx, struct gapc_security_cmd *param)
 {
+  uint16_t para_len = sizeof(struct gapc_security_cmd);
+  stack_msg_t *msg_buf = msg_alloc_buffer(para_len);
+
   dbg_func();
+  msg_fill(msg_buf, GAPC_SECURITY_CMD, TASK_GTL, KE_BUILD_ID(TASK_GAPC, conidx), para_len, (uint8_t *)param);
+  msg_send(msg_buf);
   return 0;
 }
 
@@ -350,38 +448,54 @@ int32_t app_gap_start_security(struct gapc_security_cmd *param)
 // create ATT database for given attributes.
 int32_t app_create_gatt_db(attribute_full_desc_t *att_full_desc)
 {
+  // TODO
   dbg_func();
   return 0;
 }
 /*Notify Characteristic*/
 /*Indicate Characteristic*/
 // send an event to peer device
-int32_t app_gatt_send_event()
+int32_t app_gatt_send_event(uint16_t conidx, struct gattc_send_evt_cmd *param)
 {
+  uint16_t para_len = sizeof(struct gattc_send_evt_cmd);
+  stack_msg_t *msg_buf = msg_alloc_buffer(para_len);
+
   dbg_func();
+  msg_fill(msg_buf, GATTC_SEND_EVT_CMD, TASK_GTL, KE_BUILD_ID(TASK_GATTC, conidx), para_len, (uint8_t *)param);
+  msg_send(msg_buf);
   return 0;
 }
 /* Service Changed Characteristic Indication */
 //Send a Service Changed indication to a device
-int32_t app_gatt_send_svc_change(struct gattc_send_svc_changed_cmd *param)
+int32_t app_gatt_send_svc_change(uint16_t conidx, struct gattc_send_svc_changed_cmd *param)
 {
   dbg_func();
   return 0;
 }
 /* Confirm write command execution. */
 // Write command confirmation from upper layers.
-int32_t app_gatt_write_confirm(struct gattc_write_cmd_cfm *param)
+int32_t app_gatt_write_confirm(uint16_t conidx, struct gattc_write_cmd_cfm *param)
 {
+  uint16_t para_len = sizeof(struct gattc_write_cmd_cfm);
+  stack_msg_t *msg_buf = msg_alloc_buffer(para_len);
+
   dbg_func();
+  msg_fill(msg_buf, GATTC_WRITE_CMD_CFM, TASK_GTL, KE_BUILD_ID(TASK_GATTC, conidx), para_len, (uint8_t *)param);
+  msg_send(msg_buf);
   return 0;
 }
 
 /// ATT client api
 /*** ATTRIBUTE CLIENT ***/
 // Server configuration request
-int32_t app_gatt_exchange_mtu(struct gattc_exc_mtu_cmd *param)
+int32_t app_gatt_exchange_mtu(uint16_t conidx, struct gattc_exc_mtu_cmd *param)
 {
+  uint16_t para_len = sizeof(struct gattc_exc_mtu_cmd);
+  stack_msg_t *msg_buf = msg_alloc_buffer(para_len);
+
   dbg_func();
+  msg_fill(msg_buf, GATTC_EXC_MTU_CMD, TASK_GTL, KE_BUILD_ID(TASK_GATTC, conidx), para_len, (uint8_t *)param);
+  msg_send(msg_buf);
   return 0;
 }
 /*Discover All Services */
@@ -391,9 +505,14 @@ int32_t app_gatt_exchange_mtu(struct gattc_exc_mtu_cmd *param)
 /*Discover All Characteristics of a Service*/
 /*Discover All Characteristic Descriptors*/
 // Discovery command
-int32_t app_gatt_discovery(struct gattc_disc_cmd *param)
+int32_t app_gatt_discovery(uint16_t conidx, struct gattc_disc_cmd *param)
 {
+  uint16_t para_len = sizeof(struct gattc_disc_cmd) + param->uuid_len;
+  stack_msg_t *msg_buf = msg_alloc_buffer(para_len);
+
   dbg_func();
+  msg_fill(msg_buf, GATTC_DISC_CMD, TASK_GTL, KE_BUILD_ID(TASK_GATTC, conidx), para_len, (uint8_t *)param);
+  msg_send(msg_buf);
   return 0;
 }
 /*Read Value*/
@@ -401,9 +520,14 @@ int32_t app_gatt_discovery(struct gattc_disc_cmd *param)
 /*Read Long Value*/
 /*Read Multiple Values*/
 // Read command
-int32_t app_gatt_read(struct gattc_read_cmd *param)
+int32_t app_gatt_read(uint16_t conidx, struct gattc_read_cmd *param)
 {
+  uint16_t para_len = sizeof(struct gattc_read_cmd);
+  stack_msg_t *msg_buf = msg_alloc_buffer(para_len);
+
   dbg_func();
+  msg_fill(msg_buf, GATTC_READ_CMD, TASK_GTL, KE_BUILD_ID(TASK_GATTC, conidx), para_len, (uint8_t *)param);
+  msg_send(msg_buf);
   return 0;
 }
 /*Write without response*/
@@ -416,23 +540,38 @@ int32_t app_gatt_read(struct gattc_read_cmd *param)
 /*Write Long Characteristic Descriptors*/
 /*Characteristic Value Reliable Write*/
 // Write command request
-int32_t app_gatt_write(struct gattc_write_cmd *param)
+int32_t app_gatt_write(uint16_t conidx, struct gattc_write_cmd *param)
 {
+  uint16_t para_len = sizeof(struct gattc_write_cmd) + param->length;
+  stack_msg_t *msg_buf = msg_alloc_buffer(para_len);
+
   dbg_func();
+  msg_fill(msg_buf, GATTC_WRITE_CMD, TASK_GTL, KE_BUILD_ID(TASK_GATTC, conidx), para_len, (uint8_t *)param);
+  msg_send(msg_buf);
   return 0;
 }
 /* Cancel / Execute pending write operations */
 // Execute write characteristic request
-int32_t app_gatt_write_execute(struct gattc_execute_write_cmd *param)
+int32_t app_gatt_write_execute(uint16_t conidx, struct gattc_execute_write_cmd *param)
 {
+  uint16_t para_len = sizeof(struct gattc_execute_write_cmd);
+  stack_msg_t *msg_buf = msg_alloc_buffer(para_len);
+
   dbg_func();
+  msg_fill(msg_buf, GATTC_EXECUTE_WRITE_CMD, TASK_GTL, KE_BUILD_ID(TASK_GATTC, conidx), para_len, (uint8_t *)param);
+  msg_send(msg_buf);
   return 0;
 }
 /* Reception of an indication or notification from peer device. */
 // Registration to peer device events (Indication/Notification).
-int32_t app_gatt_register_peer_event(struct gattc_reg_to_peer_evt_cmd *param)
+int32_t app_gatt_register_peer_event(uint16_t conidx, struct gattc_reg_to_peer_evt_cmd *param)
 {
+  uint16_t para_len = sizeof(struct gattc_reg_to_peer_evt_cmd);
+  stack_msg_t *msg_buf = msg_alloc_buffer(para_len);
+
   dbg_func();
+  msg_fill(msg_buf, GATTC_REG_TO_PEER_EVT_CMD, TASK_GTL, KE_BUILD_ID(TASK_GATTC, conidx), para_len, (uint8_t *)param);
+  msg_send(msg_buf);
   return 0;
 }
 
@@ -461,5 +600,15 @@ int32_t app_diss_set_char_value(struct diss_set_char_val_req *param)
   msg_send(msg_buf);
   return 0;
 }
+int32_t app_diss_enable(struct diss_enable_req *param)
+{
+  uint16_t para_len = sizeof(struct diss_enable_req);
+  stack_msg_t *msg_buf = msg_alloc_buffer(para_len);
 
+  dbg_func();
+  msg_fill(msg_buf, DISS_ENABLE_REQ, TASK_GTL, TASK_DISS, para_len, (uint8_t *)param);
+  msg_send(msg_buf);
+
+  return 0;
+}
 

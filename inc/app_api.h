@@ -16,7 +16,7 @@
 #define dbg_func() printf("func:%s\n", __func__);
 #define EVENT_BYPASS  0
 
-struct attribute_full_desc
+typedef struct attribute_full_desc
 {
 	/// Element UUID
 	uint8_t uuid[ATT_UUID_128_LEN];
@@ -30,8 +30,7 @@ struct attribute_full_desc
 	uint8_t length[2];
 	/// Element value array
 	uint8_t value[];
-};
-typedef struct attribute_full_desc attribute_full_desc_t;
+} attribute_full_desc_t;
 
 // cmd | cmd_cmp_evt
 // cmd | - | ind
@@ -78,72 +77,72 @@ typedef struct app_stack_callback
 
 /// GAPC
 	// Command Complete event
-	int32_t (*gapc_cmd_cmp_evt)(struct gapc_cmp_evt *param);
+	int32_t (*gapc_cmd_cmp_evt)(uint16_t conidx, struct gapc_cmp_evt *param);
 /* Connection state information */
 	// Indicate that a connection has been established
-	int32_t (*gapc_connection_req_indication)(struct gapc_connection_req_ind *param);
+	int32_t (*gapc_connection_req_indication)(uint16_t conidx, struct gapc_connection_req_ind *param);
 	// Indicate that a link has been disconnected
-	int32_t (*gapc_disconnect_indication)(struct gapc_disconnect_ind *param);
+	int32_t (*gapc_disconnect_indication)(uint16_t conidx, struct gapc_disconnect_ind *param);
 /* Peer device info */
 	// Name of peer device indication
-	int32_t (*gapc_peer_name_indication)(struct gapc_peer_name_ind *param);
+	int32_t (*gapc_peer_name_indication)(uint16_t conidx, struct gapc_peer_name_ind *param);
 	// Indication of peer version info
-	int32_t (*gapc_peer_version_indication)(struct gapc_peer_version_ind *param);
+	int32_t (*gapc_peer_version_indication)(uint16_t conidx, struct gapc_peer_version_ind *param);
 	// Indication of peer features info
-	int32_t (*gapc_peer_features_indication)(struct gapc_peer_features_ind *param);
+	int32_t (*gapc_peer_features_indication)(uint16_t conidx, struct gapc_peer_features_ind *param);
 	// Indication of ongoing connection RSSI
-	int32_t (*gapc_conn_rssi_indication)(struct gapc_con_rssi_ind *param);
+	int32_t (*gapc_conn_rssi_indication)(uint16_t conidx, struct gapc_con_rssi_ind *param);
 	// Indication of ongoing connection Channel Map
-	int32_t (*gapc_conn_channel_map_indication)(struct gapc_con_channel_map_ind *param);
+	int32_t (*gapc_conn_channel_map_indication)(uint16_t conidx, struct gapc_con_channel_map_ind *param);
 	// Indication of peer privacy info
-	int32_t (*gapc_privacy_indication)(struct gapc_privacy_ind *param);
+	int32_t (*gapc_privacy_indication)(uint16_t conidx, struct gapc_privacy_ind *param);
 	// Indication of peer reconnection address info
-	int32_t (*gapc_recon_addr_indication)(struct gapc_recon_addr_ind *param);
+	int32_t (*gapc_recon_addr_indication)(uint16_t conidx, struct gapc_recon_addr_ind *param);
 /* Connection parameters update */
 	// Request of updating connection parameters indication
-	int32_t (*gapc_conn_param_update_req_indication)(struct gapc_param_update_req_ind *param);
+	int32_t (*gapc_conn_param_update_req_indication)(uint16_t conidx, struct gapc_param_update_req_ind *param);
 	// Connection parameters updated indication
-	int32_t (*gapc_conn_param_updated_indication)(struct gapc_param_updated_ind *param);
+	int32_t (*gapc_conn_param_updated_indication)(uint16_t conidx, struct gapc_param_updated_ind *param);
 /* Bonding procedure */
 	// Bonding requested by peer device indication message.
-	int32_t (*gapc_bond_req_indication)(struct gapc_bond_req_ind *param);
+	int32_t (*gapc_bond_req_indication)(uint16_t conidx, struct gapc_bond_req_ind *param);
 	// Bonding information indication message
-	int32_t (*gapc_bond_info_indication)(struct gapc_bond_ind *param);
+	int32_t (*gapc_bond_info_indication)(uint16_t conidx, struct gapc_bond_ind *param);
 /* Encryption procedure */
 	// Encryption requested by peer device indication message.
-	int32_t (*gapc_encrypt_req_indication)(struct gapc_encrypt_req_ind *param);
+	int32_t (*gapc_encrypt_req_indication)(uint16_t conidx, struct gapc_encrypt_req_ind *param);
 	// Encryption information indication message
-	int32_t (*gapc_encrypt_info_indication)(struct gapc_encrypt_ind *param);
+	int32_t (*gapc_encrypt_info_indication)(uint16_t conidx, struct gapc_encrypt_ind *param);
 /* Security request procedure */
 	// Security requested by peer device indication message
-	int32_t (*gapc_security_indication)(struct gapc_security_ind *param);
+	int32_t (*gapc_security_indication)(uint16_t conidx, struct gapc_security_ind *param);
 /* Signature procedure */
 	// Indicate the current sign counters to the application
-	int32_t (*gapc_sign_counter_indication)(struct gapc_sign_counter_ind *param);
+	int32_t (*gapc_sign_counter_indication)(uint16_t conidx, struct gapc_sign_counter_ind *param);
 
 /// GATT
 	// Command Complete event
-	int32_t (*gattc_cmd_cmp_evt)(struct gattc_cmp_evt *param);
+	int32_t (*gattc_cmd_cmp_evt)(uint16_t conidx, struct gattc_cmp_evt *param);
 /* ATTRIBUTE CLIENT */
 	// Discovery services indication
-	int32_t (*gattc_disc_svc_indication)(struct gattc_disc_svc_ind *param);
+	int32_t (*gattc_disc_svc_indication)(uint16_t conidx, struct gattc_disc_svc_ind *param);
 	// Discover included services indication
-	int32_t (*gattc_disc_svc_incl_indication)(struct gattc_disc_svc_incl_ind *param);
+	int32_t (*gattc_disc_svc_incl_indication)(uint16_t conidx, struct gattc_disc_svc_incl_ind *param);
 	// Discover characteristic indication
-	int32_t (*gattc_disc_char_indication)(struct gattc_disc_char_ind *param);
+	int32_t (*gattc_disc_char_indication)(uint16_t conidx, struct gattc_disc_char_ind *param);
 	// Discovery characteristic descriptor indication
-	int32_t (*gattc_disc_char_desc_indication)(struct gattc_disc_char_desc_ind *param);
+	int32_t (*gattc_disc_char_desc_indication)(uint16_t conidx, struct gattc_disc_char_desc_ind *param);
 	// Read response including results from peer device
-	int32_t (*gattc_read_indication)(struct gattc_read_ind *param);
+	int32_t (*gattc_read_indication)(uint16_t conidx, struct gattc_read_ind *param);
 	// peer device triggers an event (indication or notification)
-	int32_t (*gattc_notify_indication)(struct gattc_event_ind *param); // remote indication or notification
+	int32_t (*gattc_notify_indication)(uint16_t conidx, struct gattc_event_ind *param); // remote indication or notification
 /* ATTRIBUTE SERVER */
 	/* Indicate that write operation is requested. */
 	// Write command indicated to upper layers.
-	int32_t (*gattc_write_cmd_indication)(struct gattc_write_cmd_ind *param);
+	int32_t (*gattc_write_cmd_indication)(uint16_t conidx, struct gattc_write_cmd_ind *param);
 	/* Indicate that a read operation is requested. */
 	// Read command indicated to upper layers.
-	int32_t (*gattc_read_cmd_indication)(struct gattc_read_cmd_ind *param);
+	int32_t (*gattc_read_cmd_indication)(uint16_t conidx, struct gattc_read_cmd_ind *param);
 
 } app_stack_callback_t;
 
@@ -191,36 +190,36 @@ int32_t app_set_stack_callback(app_stack_callback_t *callback);
 /// GAPC API
 /* Connection state information */
 	// Set specific link data configuration. Reply for connection request.
-	int32_t app_gap_conn_confirm(struct gapc_connection_cfm *param);
+	int32_t app_gap_conn_confirm(uint16_t conidx, struct gapc_connection_cfm *param);
 /* Link management command */
 	// Request disconnection of current link command.
-	int32_t app_gap_disconnect(struct gapc_disconnect_cmd *param);
+	int32_t app_gap_disconnect(uint16_t conidx, struct gapc_disconnect_cmd *param);
 /* Peer device info */
 	// Retrieve information command
-	int32_t app_gap_get_peer_info(struct gapc_get_info_cmd *param);
+	int32_t app_gap_get_peer_info(uint16_t conidx, struct gapc_get_info_cmd *param);
 /* Privacy configuration */
 	// Set Privacy flag command.
-	int32_t app_gap_set_privacy(struct gapc_set_privacy_cmd *param);
+	int32_t app_gap_set_privacy(uint16_t conidx, struct gapc_set_privacy_cmd *param);
 	// Set Reconnection Address Value command.
-	int32_t app_gap_set_recon_addr(struct gapc_set_recon_addr_cmd *param);
+	int32_t app_gap_set_recon_addr(uint16_t conidx, struct gapc_set_recon_addr_cmd *param);
 /* Connection parameters update */
 	// Perform update of connection parameters command
-	int32_t app_gap_conn_param_update(struct gapc_param_update_cmd *param);
+	int32_t app_gap_conn_param_update(uint16_t conidx, struct gapc_param_update_cmd *param);
 	// Master confirm or not that parameters proposed by slave are accepted or not
-	int32_t app_gap_conn_para_update_confirm(struct gapc_param_update_cfm *param);
+	int32_t app_gap_conn_para_update_confirm(uint16_t conidx, struct gapc_param_update_cfm *param);
 /* Bonding procedure */
 	// Start Bonding command procedure
-	int32_t app_gap_start_bonding(struct gapc_bond_cmd *param);
+	int32_t app_gap_start_bonding(uint16_t conidx, struct gapc_bond_cmd *param);
 	// Confirm requested bond information.
-	int32_t app_gap_bond_confirm(struct gapc_bond_cfm *param);
+	int32_t app_gap_bond_confirm(uint16_t conidx, struct gapc_bond_cfm *param);
 /* Encryption procedure */
 	// Start Encryption command procedure
-	int32_t app_gap_start_encrypt(struct gapc_encrypt_cmd *param);
+	int32_t app_gap_start_encrypt(uint16_t conidx, struct gapc_encrypt_cmd *param);
 	// Confirm requested Encryption information.
-	int32_t app_gap_encrypt_confirm(struct gapc_encrypt_cfm *param);
+	int32_t app_gap_encrypt_confirm(uint16_t conidx, struct gapc_encrypt_cfm *param);
 /* Security request procedure */
 	// Start Security Request command procedure
-	int32_t app_gap_start_security(struct gapc_security_cmd *param);
+	int32_t app_gap_start_security(uint16_t conidx, struct gapc_security_cmd *param);
 
 
 /// ATT server api
@@ -230,19 +229,19 @@ int32_t app_set_stack_callback(app_stack_callback_t *callback);
 /*Notify Characteristic*/
 /*Indicate Characteristic*/
 	// send an event to peer device
-	int32_t app_gatt_send_event();
+	int32_t app_gatt_send_event(uint16_t conidx, struct gattc_send_evt_cmd *param);
 /* Service Changed Characteristic Indication */
 	//Send a Service Changed indication to a device
-	int32_t app_gatt_send_svc_change(struct gattc_send_svc_changed_cmd *param);
+	int32_t app_gatt_send_svc_change(uint16_t conidx, struct gattc_send_svc_changed_cmd *param);
 /* Confirm write command execution. */
 	// Write command confirmation from upper layers.
-	int32_t app_gatt_write_confirm(struct gattc_write_cmd_cfm *param);
+	int32_t app_gatt_write_confirm(uint16_t conidx, struct gattc_write_cmd_cfm *param);
 
 
 /// ATT client api
 /*** ATTRIBUTE CLIENT ***/
 	// Server configuration request
-	int32_t app_gatt_exchange_mtu(struct gattc_exc_mtu_cmd *param);
+	int32_t app_gatt_exchange_mtu(uint16_t conidx, struct gattc_exc_mtu_cmd *param);
 	/*Discover All Services */
 	/*Discover Services by Service UUID*/
 	/*Find Included Services*/
@@ -250,13 +249,13 @@ int32_t app_set_stack_callback(app_stack_callback_t *callback);
 	/*Discover All Characteristics of a Service*/
 	/*Discover All Characteristic Descriptors*/
 	// Discovery command
-	int32_t app_gatt_discovery(struct gattc_disc_cmd *param);
+	int32_t app_gatt_discovery(uint16_t conidx, struct gattc_disc_cmd *param);
 	/*Read Value*/
 	/*Read Using UUID*/
 	/*Read Long Value*/
 	/*Read Multiple Values*/
 	// Read command
-	int32_t app_gatt_read(struct gattc_read_cmd *param);
+	int32_t app_gatt_read(uint16_t conidx, struct gattc_read_cmd *param);
 	/*Write without response*/
 	/*Write without response with Authentication*/
 	/*Write Characteristic Value*/
@@ -267,28 +266,28 @@ int32_t app_set_stack_callback(app_stack_callback_t *callback);
 	/*Write Long Characteristic Descriptors*/
 	/*Characteristic Value Reliable Write*/
 	// Write command request
-	int32_t app_gatt_write(struct gattc_write_cmd *param);
+	int32_t app_gatt_write(uint16_t conidx, struct gattc_write_cmd *param);
 	/* Cancel / Execute pending write operations */
 	// Execute write characteristic request
-	int32_t app_gatt_write_execute(struct gattc_execute_write_cmd *param);
+	int32_t app_gatt_write_execute(uint16_t conidx, struct gattc_execute_write_cmd *param);
 	/* Reception of an indication or notification from peer device. */
 	// Registration to peer device events (Indication/Notification).
-	int32_t app_gatt_register_peer_event(struct gattc_reg_to_peer_evt_cmd *param);
+	int32_t app_gatt_register_peer_event(uint16_t conidx, struct gattc_reg_to_peer_evt_cmd *param);
 
 
 /// SIG profiles related API
 /*** DISS ***/
 	int32_t app_diss_create_db(struct diss_create_db_req *param);
 	int32_t app_diss_set_char_value(struct diss_set_char_val_req *param);
-
+	int32_t app_diss_enable(struct diss_enable_req *param);
 
 typedef struct _user_operation {
   int32_t (*command)(void);
   int32_t event_id;
-  int32_t (*handler)(int32_t msg_type, void *param);
+  int32_t (*handler)(uint16_t src_id, int32_t msg_type, void *param);
 } user_operation_t;
 
-typedef int32_t (*common_stack_event_handler_t)(uint16_t event_type, void *param);
+typedef int32_t (*common_stack_event_handler_t)(uint16_t src_id, uint16_t event_type, void *param);
 
 typedef struct _stack_event_handler_map {
   uint16_t event_type;
@@ -302,7 +301,7 @@ int32_t app_add_user_operations(user_operation_t *op_list);
 int32_t app_user_start_operations();
 int32_t app_user_next_operateion();
 
-int32_t app_user_operation_handler(int32_t ev_type, void *param);
-int32_t app_user_stack_event_handler(int32_t ev_type, void *param);
+int32_t app_user_operation_handler(uint16_t src_id, int32_t ev_type, void *param);
+int32_t app_user_stack_event_handler(uint16_t src_id, int32_t ev_type, void *param);
 
 #endif /* APP_API_H_ */

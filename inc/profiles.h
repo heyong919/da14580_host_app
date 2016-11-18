@@ -8,6 +8,7 @@
 #ifndef INC_PROFILES_H_
 #define INC_PROFILES_H_
 
+#include "prf_types.h"
 
 #include "gapm.h"
 #include "gapm_task.h"
