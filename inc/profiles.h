@@ -8,6 +8,7 @@
 #ifndef INC_PROFILES_H_
 #define INC_PROFILES_H_
 
+#pragma pack(1)
 #include "prf_types.h"
 
 #include "gapm.h"
@@ -21,6 +22,7 @@
 
 #include "diss.h"
 #include "diss_task.h"
+#pragma pack()
 
 /*** GAP DEFINITIONS ***/
 #define MAX_SCAN_DEVICES 9

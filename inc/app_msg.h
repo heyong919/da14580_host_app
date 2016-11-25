@@ -10,12 +10,12 @@
 
 #include "stdtypes.h"
 //#include "string.h"
-#include "stdlib.h"
 #include "compiler.h"
 #include "profiles.h"
 
 #define FIXED_PACKET_HEAD  (0x5)
 
+#pragma pack(1)
 // be carefull the alignment of struct:
 // the element of the struct must have no padding.
 typedef struct stack_msg
@@ -26,17 +26,18 @@ typedef struct stack_msg
 	uint16_t length;
 	uint8_t data[__ARRAY_EMPTY];
 } stack_msg_t;
+#pragma pack()
 
 #define MSG_GET_LENGTH(msg_p) (sizeof(stack_msg_t)+(msg_p)->length)
 
 stack_msg_t* msg_alloc_buffer(uint16_t paralen);
-int32_t msg_fill(stack_msg_t *msg_buf,
+int32_t ble_msg_fill(stack_msg_t *msg_buf,
                  uint16_t type,
                  uint16_t srcid,
                  uint16_t dstid,
                  uint16_t paralen,
                  uint8_t *param);
-int32_t msg_send(stack_msg_t *msg);
+int32_t ble_msg_send(stack_msg_t *msg);
 int32_t msg_recv_handler(stack_msg_t *msg);
 void msg_free_buffer(stack_msg_t *msg_p);
 

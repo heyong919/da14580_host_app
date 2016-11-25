@@ -13,7 +13,7 @@
 #include "profiles.h"
 
 
-#define dbg_func() printf("func:%s\n", __func__);
+#define dbg_func() dbg_printf("func:%s\n", __func__);
 #define EVENT_BYPASS  0
 
 typedef struct attribute_full_desc
@@ -33,7 +33,6 @@ typedef struct attribute_full_desc
 } attribute_full_desc_t;
 
 // cmd | cmd_cmp_evt
-// cmd | - | ind
 // req | rsp
 // ind | - | cfm
 typedef struct app_stack_callback

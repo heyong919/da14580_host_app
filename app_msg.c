@@ -5,26 +5,26 @@
  *      Author: heyong
  */
 
-#include <stdio.h>
+#include "stdtypes.h"
 #include "app_msg.h"
 #include "app_api.h"
-#include "transport/transport.h"
+#include "transport.h"
 
 //extern app_stack_callback_t *user_stack_callback;
 
 stack_msg_t* msg_alloc_buffer(uint16_t paralen)
 {
-	uint8_t *buffer = malloc(sizeof(stack_msg_t)+paralen);
+	uint8_t *buffer = mem_alloc(sizeof(stack_msg_t)+paralen - __ARRAY_EMPTY);
   memset(buffer, 0, sizeof(stack_msg_t)+paralen);
 	return (stack_msg_t *)buffer;
 }
 
 void msg_free_buffer(stack_msg_t *msg_p)
 {
-  free(msg_p);
+  mem_free(msg_p);
 }
 
-int32_t msg_fill(stack_msg_t *msg_buf, uint16_t type, uint16_t srcid, uint16_t dstid, uint16_t paralen, uint8_t *param)
+int32_t ble_msg_fill(stack_msg_t *msg_buf, uint16_t type, uint16_t srcid, uint16_t dstid, uint16_t paralen, uint8_t *param)
 {
 	msg_buf->length = paralen;
 	if(paralen)
@@ -36,13 +36,13 @@ int32_t msg_fill(stack_msg_t *msg_buf, uint16_t type, uint16_t srcid, uint16_t d
 	return 0;
 }
 
-int32_t msg_send(stack_msg_t *msg)
+int32_t ble_msg_send(stack_msg_t *msg)
 {
   int32_t result;
   result = transport_enqueue_msg(msg);
   if(result < 0)
   {
-    printf("enqueue failed, queue full!\n");
+    dbg_printf("enqueue failed, queue full!\n");
   }
 
   // trigger write if possible
@@ -51,9 +51,10 @@ int32_t msg_send(stack_msg_t *msg)
 }
 
 int32_t msg_recv_handler(stack_msg_t *msg) {
-  printf("received msg [%x][%x][%x][%x]\n", msg->type, msg->src_id, msg->dst_id, msg->length);
+  dbg_printf("received msg [%x][%x][%x][%x]\n", msg->type, msg->src_id, msg->dst_id, msg->length);
 
 #if 0
+  /*
   switch(msg->type) {
     // GAPM message
   case GAPM_CMP_EVT:
@@ -226,9 +227,10 @@ int32_t msg_recv_handler(stack_msg_t *msg) {
     break;
 
   default:
-    printf("unknown event from stack:%x\n",  msg->type);
+    dbg_printf("unknown event from stack:%x\n",  msg->type);
     break;
   }
+  */
 #endif
 
   app_user_operation_handler(msg->src_id, msg->type, msg->data);

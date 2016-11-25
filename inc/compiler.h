@@ -19,6 +19,6 @@
 #define COMPILER_H_
 
 #define __INLINE  __inline  
-#define __ARRAY_EMPTY
+#define __ARRAY_EMPTY  0
 
 #endif

@@ -18,15 +18,8 @@
 #ifndef STDTYPES_H_
 #define STDTYPES_H_
 
-#include <stdint.h>
-#include <stddef.h>
 //#include "stdbool.h"
-#ifndef bool
+#include "clib_port.h"
 
-#define bool char
-#define true 1
-#define false 0
-
-#endif
 
 #endif //STDTYPES_H_

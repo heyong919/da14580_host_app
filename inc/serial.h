@@ -26,17 +26,18 @@
 #ifndef __LIB_SERIAL_H__
 #define __LIB_SERIAL_H__
 
-#include <termios.h>
+typedef int32_t (*ready_to_read_callback_t)();
+typedef int32_t (*ready_to_write_callback_t)();
+typedef int32_t (*console_cmd_handler_t)(char *cmd_str, uint32_t len);
 
-typedef int32_t (*ready_to_read_callback_t)(int32_t fd);
-typedef int32_t (*ready_to_write_callback_t)(int32_t fd);
-typedef int32_t (*console_cmd_handler_t)(char *cmd_str, int16_t len);
-
-int32_t serial_open(const char *name);
-int32_t serial_close(int fd);
-int32_t serial_setup(int fd, int baudrate);
-int32_t serial_write(int fd, char *data, uint16_t len);
-int32_t serial_read(int fd, char *data, int len);
-int32_t serial_start(int32_t fd, ready_to_read_callback_t read_cb, ready_to_write_callback_t write_cb, console_cmd_handler_t command_handler);
-
+int32_t serial_open(uint16_t port);
+int32_t serial_close(int32_t handle);
+int32_t serial_setup(int32_t handle, uint32_t baudrate);
+int32_t serial_write(int32_t handle, char *data, uint32_t len);
+int32_t serial_read(int32_t handle, char *data, uint32_t len);
+int32_t serial_purge_rx(int32_t fd);
+int32_t serial_get_rx_count(int32_t fd);
+int32_t serial_start(int32_t handle, ready_to_read_callback_t read_cb, ready_to_write_callback_t write_cb, console_cmd_handler_t command_handler);
+int32_t serial_notify_read();
+int32_t serial_notify_write();
 #endif
